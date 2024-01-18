@@ -26,7 +26,11 @@ class _AboutState extends State<About> {
                 subtitle: const Text('Valorant-API'),
                 trailing: const Icon(Icons.link),
                 onTap: () {
-                  launchUrl(Uri.parse('https://dash.valorant-api.com/'));
+                  launchUrl(
+                    Uri.parse(
+                      'https://dash.valorant-api.com/',
+                    ),
+                  );
                 },
               ),
             ),
@@ -40,20 +44,31 @@ class _AboutState extends State<About> {
                 subtitle: const Text('E-mail'),
                 trailing: const Icon(Icons.mail),
                 onTap: () {
-                  launchUrl(Uri.parse(
-                      'mailto:weitsungyu@gmail.com?subject=關於 val_content app 的回饋及建議&body=內容'));
+                  launchUrl(
+                    Uri.parse(
+                      'mailto:weitsungyu@gmail.com?subject=關於 val_content app 的回饋及建議&body=內容',
+                    ),
+                  );
                 },
               ),
             ),
           ),
           const Divider(),
-          const Card(
+          Card(
             child: Padding(
-              padding: EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8.0),
               child: ListTile(
-                title: Text('About'),
-                subtitle: Text(
-                    'val_content is not affiliated with or endorsed by Riot Games in any way.'),
+                title: const Text('About'),
+                subtitle: const Text(
+                  'val_content is not affiliated with or endorsed by Riot Games in any way.',
+                ),
+                onTap: () {
+                  launchUrl(
+                    Uri.parse(
+                      'https://playvalorant.com/',
+                    ),
+                  );
+                },
               ),
             ),
           ),
