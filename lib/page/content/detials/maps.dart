@@ -17,45 +17,22 @@ class _MapsState extends State<Maps> {
     return Scaffold(
       body: ListView.separated(
         itemBuilder: (BuildContext context, index) {
-          return ListTile(
-            leading: Image.network(
-              data[index]['listViewIcon'],
-              width: 150,
-            ),
-            title: Text(data[index]['displayName']),
-            trailing: const Icon(Icons.arrow_right),
-            onTap: () {
-              showDialog<void>(
-                context: context,
-                barrierDismissible: false, // user must tap button!
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(data[index]['displayName']),
-                    content: SingleChildScrollView(
-                      child: ListBody(
-                        children: <Widget>[
-                          Image.network(
-                            data[index]['displayIcon'],
-                          ),
-                        ],
-                      ),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text('關閉'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          );
+          return MapItemWidget(data: data[index]);
         },
         separatorBuilder: (BuildContext context, index) => const Divider(),
         itemCount: data.length,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showSearch(
+            context: context,
+            delegate: MySearchDelegate(
+              myList: data,
+            ),
+          );
+        },
+        icon: const Icon(Icons.search),
+        label: const Text('搜尋'),
       ),
     );
   }
@@ -81,5 +58,110 @@ class _MapsState extends State<Maps> {
   void initState() {
     fetchData();
     super.initState();
+  }
+}
+
+class MapItemWidget extends StatelessWidget {
+  const MapItemWidget({
+    super.key,
+    required this.data,
+  });
+
+  final dynamic data;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Image.network(
+        data['listViewIcon'],
+        width: 150,
+      ),
+      title: Text(data['displayName']),
+      trailing: const Icon(Icons.arrow_right),
+      onTap: () {
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false, // user must tap button!
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(data['displayName']),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    Image.network(
+                      data['displayIcon'],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('關閉'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class MySearchDelegate extends SearchDelegate {
+  List myList;
+
+  MySearchDelegate({
+    required this.myList,
+  });
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+        IconButton(
+            onPressed: () {
+              if (query.isEmpty) {
+                close(context, null);
+              } else {
+                query = "";
+              }
+            },
+            icon: const Icon(Icons.clear)),
+      ];
+
+  @override
+  Widget? buildLeading(BuildContext context) => IconButton(
+      onPressed: () => close(context, null),
+      icon: const Icon(Icons.arrow_back));
+
+  @override
+  Widget buildResults(BuildContext context) => Center(
+        child: Text(
+          query,
+          style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
+        ),
+      );
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    List suggestions = myList.where((searchResult) {
+      final result = searchResult['displayName'];
+      final input = query.toUpperCase();
+
+      return result.contains(input);
+    }).toList();
+    return ListView.separated(
+      itemCount: suggestions.length,
+      itemBuilder: (context, index) {
+        var suggestion = suggestions[index];
+
+        return MapItemWidget(
+          data: suggestion,
+        );
+      },
+      separatorBuilder: (BuildContext context, int index) {
+        return const Divider();
+      },
+    );
   }
 }
