@@ -122,8 +122,8 @@ class MySearchDelegate extends SearchDelegate {
   @override
   Widget buildSuggestions(BuildContext context) {
     List suggestions = myList.where((searchResult) {
-      final result = searchResult['tierName'];
-      final input = query.toUpperCase();
+      final result = searchResult['tierName'].toLowerCase();
+      final input = query.toLowerCase();
 
       return result.contains(input);
     }).toList();
