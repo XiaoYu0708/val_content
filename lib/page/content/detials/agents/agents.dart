@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 import '/page/content/detials/agents/select_agent_detial.dart';
 
@@ -34,15 +35,17 @@ class _AgentsState extends State<Agents> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(
+          FlutterI18n.translate(context, 'floatingActionButton.search.label'),
+        ),
       ),
     );
   }
 
   Future<void> fetchData() async {
     try {
-      final response = await http.get(Uri.parse(
-          'https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=zh-TW'));
+      final response = await http
+          .get(Uri.parse(FlutterI18n.translate(context, 'WebApiUrl.Agents')));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -57,9 +60,9 @@ class _AgentsState extends State<Agents> {
   }
 
   @override
-  void initState() {
+  void didChangeDependencies() {
     fetchData();
-    super.initState();
+    super.didChangeDependencies();
   }
 }
 

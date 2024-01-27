@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class About extends StatefulWidget {
@@ -13,7 +14,7 @@ class _AboutState extends State<About> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('關於'),
+        title: Text(FlutterI18n.translate(context, 'Page.About.AppBar.Title')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(12.0),
@@ -40,13 +41,15 @@ class _AboutState extends State<About> {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: ListTile(
-                title: const Text('回饋及建議'),
+                title: Text(FlutterI18n.translate(
+                    context, 'Page.About.Body.ListTile2.Title')),
                 subtitle: const Text('E-mail'),
                 trailing: const Icon(Icons.mail),
                 onTap: () {
                   launchUrl(
                     Uri.parse(
-                      'mailto:weitsungyu@gmail.com?subject=關於 val_content app 的回饋及建議&body=內容',
+                      FlutterI18n.translate(
+                          context, 'Page.About.Body.ListTile2.onTap.launchUrl'),
                     ),
                   );
                 },

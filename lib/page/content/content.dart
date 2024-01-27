@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import '/page/content/detials/level_borders.dart';
 import '/page/content/detials/competitivetiers.dart';
 import '/page/content/detials/agents/agents.dart';
@@ -19,68 +20,76 @@ class Content extends StatefulWidget {
 class _ContentState extends State<Content> {
   int _drawerSelectIndex = 0;
 
-  final List<MyDrawerNavigationDrawerDestinations>
-      _myDrawerNavigationDrawerDestinations = [
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.person_outline),
-      label: '特務',
-      page: const Agents(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.radio_button_unchecked),
-      label: '吊飾',
-      page: const Buddies(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.grid_3x3),
-      label: '組合包',
-      page: const Bundles(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.crop_portrait_rounded),
-      label: '武器',
-      page: const Weapons(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.map_outlined),
-      label: '地圖',
-      page: const Maps(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.gamepad_outlined),
-      label: '玩家卡面',
-      page: const PlayerCards(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.format_paint_outlined),
-      label: '噴漆',
-      page: const Sprays(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.crop_square_rounded),
-      label: '牌位',
-      page: const Competitivetiers(),
-    ),
-    MyDrawerNavigationDrawerDestinations(
-      icon: const Icon(Icons.star_border),
-      label: '等級框飾',
-      page: const LevelBorders(),
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<MyDrawerNavigationDrawerDestinations>
+        myDrawerNavigationDrawerDestinations = [
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.person_outline),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Agents'),
+        page: const Agents(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.radio_button_unchecked),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Buddies'),
+        page: const Buddies(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.grid_3x3),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Bundles'),
+        page: const Bundles(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.crop_portrait_rounded),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Weapons'),
+        page: const Weapons(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.map_outlined),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Maps'),
+        page: const Maps(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.gamepad_outlined),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.PlayerCards'),
+        page: const PlayerCards(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.format_paint_outlined),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Sprays'),
+        page: const Sprays(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.crop_square_rounded),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.Competitivetiers'),
+        page: const Competitivetiers(),
+      ),
+      MyDrawerNavigationDrawerDestinations(
+        icon: const Icon(Icons.star_border),
+        label: FlutterI18n.translate(context,
+            'Page.Content.NavigationDrawer.NavigationDrawerDestinations.LevelBorders'),
+        page: const LevelBorders(),
+      ),
+    ];
     return Scaffold(
       appBar: AppBar(
         title: Text([
-          ..._myDrawerNavigationDrawerDestinations
+          ...myDrawerNavigationDrawerDestinations
               .map((MyDrawerNavigationDrawerDestinations value) {
             return value.label;
           })
         ][_drawerSelectIndex]),
       ),
       body: [
-        ..._myDrawerNavigationDrawerDestinations
+        ...myDrawerNavigationDrawerDestinations
             .map((MyDrawerNavigationDrawerDestinations value) {
           return value.page;
         })
@@ -88,20 +97,21 @@ class _ContentState extends State<Content> {
       drawer: NavigationDrawer(
         selectedIndex: _drawerSelectIndex,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(
+          Padding(
+            padding: const EdgeInsets.only(
               left: 20.0,
               top: 12.0,
               bottom: 12.0,
             ),
             child: Text(
-              '選單',
-              style: TextStyle(
+              FlutterI18n.translate(
+                  context, 'Page.Content.NavigationDrawer.Title'),
+              style: const TextStyle(
                 fontSize: 20.0,
               ),
             ),
           ),
-          ..._myDrawerNavigationDrawerDestinations
+          ...myDrawerNavigationDrawerDestinations
               .map((MyDrawerNavigationDrawerDestinations value) {
             return NavigationDrawerDestination(
               label: Text(value.label),

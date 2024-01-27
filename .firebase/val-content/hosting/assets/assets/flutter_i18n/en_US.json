@@ -1,0 +1,64 @@
+{
+    "WebApiUrl": {
+        "Agents": "https://valorant-api.com/v1/agents?isPlayableCharacter=true",
+        "Buddies": "https://valorant-api.com/v1/buddies",
+        "Bundles": "https://valorant-api.com/v1/bundles",
+        "Weapons": "https://valorant-api.com/v1/weapons",
+        "Maps": "https://valorant-api.com/v1/maps",
+        "PlayerCards": "https://valorant-api.com/v1/playercards",
+        "Sprays": "https://valorant-api.com/v1/sprays",
+        "Competitivetiers": "https://valorant-api.com/v1/competitivetiers",
+        "LevelBorders": "https://valorant-api.com/v1/levelborders"
+    },
+    "Menu": {
+        "destinations": {
+            "label1": "Content",
+            "label2": "About"
+        }
+    },
+    "Page": {
+        "About": {
+            "AppBar": {
+                "Title": "About"
+            },
+            "Body": {
+                "ListTile2": {
+                    "Title": "Feedback",
+                    "onTap": {
+                        "launchUrl": "mailto:weitsungyu@gmail.com?subject=Feedback and suggestions about val_content APP"
+                    }
+                }
+            }
+        },
+        "Content": {
+            "NavigationDrawer": {
+                "Title": "Menu",
+                "NavigationDrawerDestinations": {
+                    "Agents": "Agents",
+                    "Buddies": "Buddies",
+                    "Bundles": "Bundles",
+                    "Weapons": "Weapons",
+                    "Maps": "Maps",
+                    "PlayerCards": "PlayerCards",
+                    "Sprays": "Sprays",
+                    "Competitivetiers": "Competitivetiers",
+                    "LevelBorders": "LevelBorders"
+                }
+            }
+        },
+        "WeaponDetial": {
+            "dontDisPlay1": "Random Favorite Skin",
+            "dontDisPlay2": "Standard"
+        }
+    },
+    "floatingActionButton": {
+        "search": {
+            "label": "Search"
+        }
+    },
+    "AlertDialog": {
+        "actions": {
+            "close": "Close"
+        }
+    }
+}

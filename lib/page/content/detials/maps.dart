@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 
 class Maps extends StatefulWidget {
@@ -17,9 +18,14 @@ class _MapsState extends State<Maps> {
     return Scaffold(
       body: ListView.separated(
         itemBuilder: (BuildContext context, index) {
-          return MapItemWidget(data: data[index]);
+          return data[index]['displayIcon'] != null
+              ? MapItemWidget(data: data[index])
+              : const SizedBox();
         },
-        separatorBuilder: (BuildContext context, index) => const Divider(),
+        separatorBuilder: (BuildContext context, index) =>
+            data[index]['displayIcon'] != null
+                ? const Divider()
+                : const SizedBox(),
         itemCount: data.length,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -32,15 +38,19 @@ class _MapsState extends State<Maps> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(FlutterI18n.translate(
+            context, 'floatingActionButton.search.label')),
       ),
     );
   }
 
   Future<void> fetchData() async {
     try {
-      final response = await http
-          .get(Uri.parse('https://valorant-api.com/v1/maps?language=zh-TW'));
+      final response = await http.get(
+        Uri.parse(
+          FlutterI18n.translate(context, 'WebApiUrl.Maps'),
+        ),
+      );
 
       if (response.statusCode == 200) {
         setState(() {
@@ -55,9 +65,9 @@ class _MapsState extends State<Maps> {
   }
 
   @override
-  void initState() {
+  void didChangeDependencies() {
     fetchData();
-    super.initState();
+    super.didChangeDependencies();
   }
 }
 
@@ -96,7 +106,8 @@ class MapItemWidget extends StatelessWidget {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('關閉'),
+                  child: Text(FlutterI18n.translate(
+                      context, 'AlertDialog.actions.close')),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -153,14 +164,16 @@ class MySearchDelegate extends SearchDelegate {
     return ListView.separated(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
-        var suggestion = suggestions[index];
-
-        return MapItemWidget(
-          data: suggestion,
-        );
+        return suggestions[index]['displayIcon'] != null
+            ? MapItemWidget(
+                data: suggestions[index],
+              )
+            : const SizedBox();
       },
       separatorBuilder: (BuildContext context, int index) {
-        return const Divider();
+        return suggestions[index]['displayIcon'] != null
+            ? const Divider()
+            : const SizedBox();
       },
     );
   }

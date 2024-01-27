@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import '/page/about.dart';
 import '/page/content/content.dart';
 
@@ -25,15 +26,23 @@ class _MenuState extends State<Menu> {
             _pageIndex = value;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-              icon: Icon(Icons.ad_units_outlined),
-              selectedIcon: Icon(Icons.ad_units),
-              label: '資產'),
+            icon: const Icon(Icons.ad_units_outlined),
+            selectedIcon: const Icon(Icons.ad_units),
+            label: FlutterI18n.translate(
+              context,
+              "Menu.destinations.label1",
+            ),
+          ),
           NavigationDestination(
-              icon: Icon(Icons.info_outline),
-              selectedIcon: Icon(Icons.info),
-              label: '關於'),
+            icon: const Icon(Icons.info_outline),
+            selectedIcon: const Icon(Icons.info),
+            label: FlutterI18n.translate(
+              context,
+              "Menu.destinations.label2",
+            ),
+          ),
         ],
       ),
     );

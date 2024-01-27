@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 
 class Sprays extends StatefulWidget {
@@ -33,7 +34,9 @@ class _SpraysState extends State<Sprays> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(
+          FlutterI18n.translate(context, 'floatingActionButton.search.label'),
+        ),
       ),
     );
   }
@@ -41,7 +44,7 @@ class _SpraysState extends State<Sprays> {
   Future<void> fetchData() async {
     try {
       final response = await http
-          .get(Uri.parse('https://valorant-api.com/v1/sprays?language=zh-TW'));
+          .get(Uri.parse(FlutterI18n.translate(context, 'WebApiUrl.Sprays')));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -56,9 +59,9 @@ class _SpraysState extends State<Sprays> {
   }
 
   @override
-  void initState() {
+  void didChangeDependencies() {
     fetchData();
-    super.initState();
+    super.didChangeDependencies();
   }
 }
 

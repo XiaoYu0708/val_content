@@ -1,0 +1,64 @@
+{
+    "WebApiUrl": {
+        "Agents": "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=zh-TW",
+        "Buddies": "https://valorant-api.com/v1/buddies?language=zh-TW",
+        "Bundles": "https://valorant-api.com/v1/bundles?language=zh-TW",
+        "Weapons": "https://valorant-api.com/v1/weapons?language=zh-TW",
+        "Maps": "https://valorant-api.com/v1/maps?language=zh-TW",
+        "PlayerCards": "https://valorant-api.com/v1/playercards?language=zh-TW",
+        "Sprays": "https://valorant-api.com/v1/sprays?language=zh-TW",
+        "Competitivetiers": "https://valorant-api.com/v1/competitivetiers?language=zh-TW",
+        "LevelBorders": "https://valorant-api.com/v1/levelborders?language=zh-TW"
+    },
+    "Menu": {
+        "destinations": {
+            "label1": "資產",
+            "label2": "關於"
+        }
+    },
+    "Page": {
+        "About": {
+            "AppBar": {
+                "Title": "關於"
+            },
+            "Body": {
+                "ListTile2": {
+                    "Title": "回饋及建議",
+                    "onTap": {
+                        "launchUrl": "mailto:weitsungyu@gmail.com?subject=關於 val_content app 的回饋及建議"
+                    }
+                }
+            }
+        },
+        "Content": {
+            "NavigationDrawer": {
+                "Title": "選單",
+                "NavigationDrawerDestinations": {
+                    "Agents": "特務",
+                    "Buddies": "吊飾",
+                    "Bundles": "組合包",
+                    "Weapons": "武器",
+                    "Maps": "地圖",
+                    "PlayerCards": "玩家卡面",
+                    "Sprays": "噴漆",
+                    "Competitivetiers": "牌位",
+                    "LevelBorders": "等級框飾"
+                }
+            }
+        },
+        "WeaponDetial": {
+            "dontDisPlay1": "隨機最愛造型",
+            "dontDisPlay2": "標準"
+        }
+    },
+    "floatingActionButton": {
+        "search": {
+            "label": "搜尋"
+        }
+    },
+    "AlertDialog": {
+        "actions": {
+            "close": "關閉"
+        }
+    }
+}

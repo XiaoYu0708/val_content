@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 
 class PlayerCards extends StatefulWidget {
@@ -32,7 +33,9 @@ class _PlayerCardsState extends State<PlayerCards> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(
+          FlutterI18n.translate(context, 'floatingActionButton.search.label'),
+        ),
       ),
     );
   }
@@ -40,7 +43,7 @@ class _PlayerCardsState extends State<PlayerCards> {
   Future<void> fetchData() async {
     try {
       final response = await http.get(
-          Uri.parse('https://valorant-api.com/v1/playercards?language=zh-TW'));
+          Uri.parse(FlutterI18n.translate(context, 'WebApiUrl.PlayerCards')));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -55,9 +58,9 @@ class _PlayerCardsState extends State<PlayerCards> {
   }
 
   @override
-  void initState() {
+  void didChangeDependencies() {
     fetchData();
-    super.initState();
+    super.didChangeDependencies();
   }
 }
 
@@ -92,7 +95,8 @@ class PlayerCardItemWidget extends StatelessWidget {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('關閉'),
+                  child: Text(FlutterI18n.translate(
+                      context, 'AlertDialog.actions.close')),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },

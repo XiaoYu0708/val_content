@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 
 class Bundles extends StatefulWidget {
@@ -34,7 +35,9 @@ class _BundlesState extends State<Bundles> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(
+          FlutterI18n.translate(context, 'floatingActionButton.search.label'),
+        ),
       ),
     );
   }
@@ -42,7 +45,7 @@ class _BundlesState extends State<Bundles> {
   Future<void> fetchData() async {
     try {
       final response = await http
-          .get(Uri.parse('https://valorant-api.com/v1/bundles?language=zh-TW'));
+          .get(Uri.parse(FlutterI18n.translate(context, 'WebApiUrl.Bundles')));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -57,9 +60,9 @@ class _BundlesState extends State<Bundles> {
   }
 
   @override
-  void initState() {
+  void didChangeDependencies() {
     fetchData();
-    super.initState();
+    super.didChangeDependencies();
   }
 }
 
@@ -97,7 +100,9 @@ class BundlesItemWidget extends StatelessWidget {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('關閉'),
+                  child: Text(
+                    FlutterI18n.translate(context, 'AlertDialog.actions.close'),
+                  ),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },

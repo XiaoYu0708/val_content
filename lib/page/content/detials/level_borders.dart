@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 
 class LevelBorders extends StatefulWidget {
@@ -33,7 +34,9 @@ class _LevelBordersState extends State<LevelBorders> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(
+          FlutterI18n.translate(context, 'floatingActionButton.search.label'),
+        ),
       ),
     );
   }
@@ -41,7 +44,10 @@ class _LevelBordersState extends State<LevelBorders> {
   Future<void> fetchData() async {
     try {
       final response = await http.get(
-          Uri.parse('https://valorant-api.com/v1/levelborders?language=zh-TW'));
+        Uri.parse(
+          FlutterI18n.translate(context, 'WebApiUrl.LevelBorders'),
+        ),
+      );
 
       if (response.statusCode == 200) {
         setState(() {
@@ -56,9 +62,9 @@ class _LevelBordersState extends State<LevelBorders> {
   }
 
   @override
-  void initState() {
+  void didChangeDependencies() {
     fetchData();
-    super.initState();
+    super.didChangeDependencies();
   }
 }
 

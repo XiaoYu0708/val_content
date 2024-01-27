@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 
 class WeaponDetial extends StatefulWidget {
   final dynamic data;
@@ -20,16 +21,24 @@ class _WeaponDetialState extends State<WeaponDetial> {
       appBar: AppBar(title: Text(data['displayName'])),
       body: ListView.separated(
         itemBuilder: (BuildContext context, index) {
-          return data['skins'][index]['displayName'] != '隨機最愛造型' &&
-                  !data['skins'][index]['displayName'].startsWith('標準')
+          return data['skins'][index]['displayName'] !=
+                      FlutterI18n.translate(
+                          context, 'Page.WeaponDetial.dontDisPlay1') &&
+                  !data['skins'][index]['displayName'].startsWith(
+                      FlutterI18n.translate(
+                          context, 'Page.WeaponDetial.dontDisPlay2'))
               ? SelectWeaponDetialItemWidget(data: data['skins'][index])
               : const SizedBox();
         },
-        separatorBuilder: (BuildContext context, index) =>
-            data['skins'][index]['displayName'] != '隨機最愛造型' &&
-                    !data['skins'][index]['displayName'].startsWith('標準')
-                ? const Divider()
-                : const SizedBox(),
+        separatorBuilder: (BuildContext context, index) => data['skins'][index]
+                        ['displayName'] !=
+                    FlutterI18n.translate(
+                        context, 'Page.WeaponDetial.dontDisPlay1') &&
+                !data['skins'][index]['displayName'].startsWith(
+                    FlutterI18n.translate(
+                        context, 'Page.WeaponDetial.dontDisPlay2'))
+            ? const Divider()
+            : const SizedBox(),
         itemCount: data['skins'].length,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -42,7 +51,9 @@ class _WeaponDetialState extends State<WeaponDetial> {
           );
         },
         icon: const Icon(Icons.search),
-        label: const Text('搜尋'),
+        label: Text(
+          FlutterI18n.translate(context, 'floatingActionButton.search.label'),
+        ),
       ),
     );
   }
@@ -87,7 +98,8 @@ class SelectWeaponDetialItemWidget extends StatelessWidget {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('關閉'),
+                  child: Text(FlutterI18n.translate(
+                      context, 'AlertDialog.actions.close')),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -144,16 +156,24 @@ class MySearchDelegate extends SearchDelegate {
     return ListView.separated(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
-        return suggestions[index]['displayName'] != '隨機最愛造型' &&
-                !suggestions[index]['displayName'].startsWith('標準')
+        return suggestions[index]['displayName'] !=
+                    FlutterI18n.translate(
+                        context, 'Page.WeaponDetial.dontDisPlay1') &&
+                !suggestions[index]['displayName'].startsWith(
+                    FlutterI18n.translate(
+                        context, 'Page.WeaponDetial.dontDisPlay2'))
             ? SelectWeaponDetialItemWidget(
                 data: suggestions[index],
               )
             : const SizedBox();
       },
       separatorBuilder: (BuildContext context, int index) {
-        return suggestions[index]['displayName'] != '隨機最愛造型' &&
-                !suggestions[index]['displayName'].startsWith('標準')
+        return suggestions[index]['displayName'] !=
+                    FlutterI18n.translate(
+                        context, 'Page.WeaponDetial.dontDisPlay1') &&
+                !suggestions[index]['displayName'].startsWith(
+                    FlutterI18n.translate(
+                        context, 'Page.WeaponDetial.dontDisPlay2'))
             ? const Divider()
             : const SizedBox();
       },
