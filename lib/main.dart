@@ -22,9 +22,11 @@ class _MyAppState extends State<MyApp> {
       title: 'val_content',
       theme: ThemeData(
         brightness: Brightness.light,
+        useMaterial3: true,
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
+        useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: [
