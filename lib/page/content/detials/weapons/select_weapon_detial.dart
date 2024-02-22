@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
+import 'package:video_player/video_player.dart';
 
 class WeaponDetial extends StatefulWidget {
   final dynamic data;
@@ -59,7 +60,7 @@ class _WeaponDetialState extends State<WeaponDetial> {
   }
 }
 
-class SelectWeaponDetialItemWidget extends StatelessWidget {
+class SelectWeaponDetialItemWidget extends StatefulWidget {
   const SelectWeaponDetialItemWidget({
     super.key,
     required this.data,
@@ -68,31 +69,157 @@ class SelectWeaponDetialItemWidget extends StatelessWidget {
   final dynamic data;
 
   @override
+  State<SelectWeaponDetialItemWidget> createState() =>
+      _SelectWeaponDetialItemWidgetState();
+}
+
+class _SelectWeaponDetialItemWidgetState
+    extends State<SelectWeaponDetialItemWidget> {
+  @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: Image.network(
-        data['levels'][0]['displayIcon'],
+        widget.data['chromas'][0]['fullRender'],
         width: 150,
       ),
       title: Text(
-        data['displayName'],
+        widget.data['displayName'],
       ),
       onTap: () {
+        final PageController pageViewController =
+            PageController(initialPage: 0);
+        int chromasMaxIndex = widget.data['chromas'].length;
+        VideoPlayerController _videoPlayerController =
+            VideoPlayerController.networkUrl(Uri.parse(
+                'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'));
+        ValueNotifier _initializeVideoPlayerFuture = ValueNotifier(dynamic);
+
+        _initializeVideoPlayerFuture.value =
+            _videoPlayerController.initialize().then((_) {
+          _videoPlayerController.play();
+          _videoPlayerController.setLooping(false);
+          setState(() {});
+        });
         showDialog<void>(
           context: context,
           barrierDismissible: false, // user must tap button!
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text(data['displayName']),
+              title: Text(widget.data['displayName']),
               content: SingleChildScrollView(
                 child: ListBody(
                   children: <Widget>[
-                    ...data['chromas'].map((value) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Image.network(value['fullRender']),
-                      );
-                    }),
+                    SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: PageView(
+                        controller: pageViewController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          ...widget.data['chromas'].map((value) {
+                            return Image.network(value['fullRender']);
+                          }),
+                          ValueListenableBuilder(
+                            valueListenable: _initializeVideoPlayerFuture,
+                            builder:
+                                (BuildContext context, value, Widget? child) {
+                              return FutureBuilder(
+                                future: value,
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.done) {
+                                    return AspectRatio(
+                                      aspectRatio: _videoPlayerController
+                                          .value.aspectRatio,
+                                      child:
+                                          VideoPlayer(_videoPlayerController),
+                                    );
+                                  } else {
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 30,
+                      width: 30,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          ...widget.data['chromas'].map((value) {
+                            return value['streamedVideo'] == null
+                                ? ElevatedButton(
+                                    onPressed: () {
+                                      _videoPlayerController.dispose();
+                                      pageViewController.jumpToPage(widget
+                                          .data['chromas']
+                                          .indexOf(value));
+                                    },
+                                    child: Text(
+                                        "${widget.data['chromas'].indexOf(value) + 1}"))
+                                : Card(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        pageViewController
+                                            .jumpToPage(chromasMaxIndex);
+
+                                        _videoPlayerController.dispose();
+
+                                        _videoPlayerController =
+                                            VideoPlayerController.networkUrl(
+                                                Uri.parse(
+                                                    value['streamedVideo']));
+                                        _initializeVideoPlayerFuture.value =
+                                            _videoPlayerController
+                                                .initialize()
+                                                .then((_) {
+                                          _videoPlayerController.play();
+                                          _videoPlayerController
+                                              .setLooping(false);
+                                          setState(() {});
+                                        });
+                                      },
+                                      child: Text(
+                                          "${widget.data['chromas'].indexOf(value) + 1}"),
+                                    ),
+                                  );
+                          })
+                        ],
+                      ),
+                    ),
+                    ...widget.data['levels'].map((value) {
+                      return value['streamedVideo'] != null
+                          ? Card(
+                              child: ListTile(
+                                onTap: () {
+                                  pageViewController
+                                      .jumpToPage(chromasMaxIndex);
+
+                                  _videoPlayerController.dispose();
+
+                                  _videoPlayerController =
+                                      VideoPlayerController.networkUrl(
+                                          Uri.parse(value['streamedVideo']));
+                                  _initializeVideoPlayerFuture.value =
+                                      _videoPlayerController
+                                          .initialize()
+                                          .then((_) {
+                                    _videoPlayerController.play();
+                                    _videoPlayerController.setLooping(false);
+                                    setState(() {});
+                                  });
+                                },
+                                title: Text(value['displayName']),
+                              ),
+                            )
+                          : const SizedBox();
+                    })
                   ],
                 ),
               ),
@@ -101,6 +228,7 @@ class SelectWeaponDetialItemWidget extends StatelessWidget {
                   child: Text(FlutterI18n.translate(
                       context, 'AlertDialog.actions.close')),
                   onPressed: () {
+                    _videoPlayerController.dispose();
                     Navigator.of(context).pop();
                   },
                 ),
@@ -138,12 +266,7 @@ class MySearchDelegate extends SearchDelegate {
       icon: const Icon(Icons.arrow_back));
 
   @override
-  Widget buildResults(BuildContext context) => Center(
-        child: Text(
-          query,
-          style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
-        ),
-      );
+  Widget buildResults(BuildContext context) => buildSuggestions(context);
 
   @override
   Widget buildSuggestions(BuildContext context) {

@@ -118,12 +118,7 @@ class MySearchDelegate extends SearchDelegate {
       icon: const Icon(Icons.arrow_back));
 
   @override
-  Widget buildResults(BuildContext context) => Center(
-        child: Text(
-          query,
-          style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
-        ),
-      );
+  Widget buildResults(BuildContext context) => buildSuggestions(context);
 
   @override
   Widget buildSuggestions(BuildContext context) {
