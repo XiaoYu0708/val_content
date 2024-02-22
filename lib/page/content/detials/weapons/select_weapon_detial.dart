@@ -89,15 +89,15 @@ class _SelectWeaponDetialItemWidgetState
         final PageController pageViewController =
             PageController(initialPage: 0);
         int chromasMaxIndex = widget.data['chromas'].length;
-        VideoPlayerController _videoPlayerController =
+        VideoPlayerController videoPlayerController =
             VideoPlayerController.networkUrl(Uri.parse(
                 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'));
-        ValueNotifier _initializeVideoPlayerFuture = ValueNotifier(dynamic);
+        ValueNotifier initializeVideoPlayerFuture = ValueNotifier(dynamic);
 
-        _initializeVideoPlayerFuture.value =
-            _videoPlayerController.initialize().then((_) {
-          _videoPlayerController.play();
-          _videoPlayerController.setLooping(false);
+        initializeVideoPlayerFuture.value =
+            videoPlayerController.initialize().then((_) {
+          videoPlayerController.play();
+          videoPlayerController.setLooping(false);
           setState(() {});
         });
         showDialog<void>(
@@ -120,7 +120,7 @@ class _SelectWeaponDetialItemWidgetState
                             return Image.network(value['fullRender']);
                           }),
                           ValueListenableBuilder(
-                            valueListenable: _initializeVideoPlayerFuture,
+                            valueListenable: initializeVideoPlayerFuture,
                             builder:
                                 (BuildContext context, value, Widget? child) {
                               return FutureBuilder(
@@ -129,10 +129,9 @@ class _SelectWeaponDetialItemWidgetState
                                   if (snapshot.connectionState ==
                                       ConnectionState.done) {
                                     return AspectRatio(
-                                      aspectRatio: _videoPlayerController
+                                      aspectRatio: videoPlayerController
                                           .value.aspectRatio,
-                                      child:
-                                          VideoPlayer(_videoPlayerController),
+                                      child: VideoPlayer(videoPlayerController),
                                     );
                                   } else {
                                     return const Center(
@@ -156,7 +155,7 @@ class _SelectWeaponDetialItemWidgetState
                             return value['streamedVideo'] == null
                                 ? ElevatedButton(
                                     onPressed: () {
-                                      _videoPlayerController.dispose();
+                                      videoPlayerController.dispose();
                                       pageViewController.jumpToPage(widget
                                           .data['chromas']
                                           .indexOf(value));
@@ -169,18 +168,18 @@ class _SelectWeaponDetialItemWidgetState
                                         pageViewController
                                             .jumpToPage(chromasMaxIndex);
 
-                                        _videoPlayerController.dispose();
+                                        videoPlayerController.dispose();
 
-                                        _videoPlayerController =
+                                        videoPlayerController =
                                             VideoPlayerController.networkUrl(
                                                 Uri.parse(
                                                     value['streamedVideo']));
-                                        _initializeVideoPlayerFuture.value =
-                                            _videoPlayerController
+                                        initializeVideoPlayerFuture.value =
+                                            videoPlayerController
                                                 .initialize()
                                                 .then((_) {
-                                          _videoPlayerController.play();
-                                          _videoPlayerController
+                                          videoPlayerController.play();
+                                          videoPlayerController
                                               .setLooping(false);
                                           setState(() {});
                                         });
@@ -201,17 +200,17 @@ class _SelectWeaponDetialItemWidgetState
                                   pageViewController
                                       .jumpToPage(chromasMaxIndex);
 
-                                  _videoPlayerController.dispose();
+                                  videoPlayerController.dispose();
 
-                                  _videoPlayerController =
+                                  videoPlayerController =
                                       VideoPlayerController.networkUrl(
                                           Uri.parse(value['streamedVideo']));
-                                  _initializeVideoPlayerFuture.value =
-                                      _videoPlayerController
+                                  initializeVideoPlayerFuture.value =
+                                      videoPlayerController
                                           .initialize()
                                           .then((_) {
-                                    _videoPlayerController.play();
-                                    _videoPlayerController.setLooping(false);
+                                    videoPlayerController.play();
+                                    videoPlayerController.setLooping(false);
                                     setState(() {});
                                   });
                                 },
@@ -228,7 +227,7 @@ class _SelectWeaponDetialItemWidgetState
                   child: Text(FlutterI18n.translate(
                       context, 'AlertDialog.actions.close')),
                   onPressed: () {
-                    _videoPlayerController.dispose();
+                    videoPlayerController.dispose();
                     Navigator.of(context).pop();
                   },
                 ),
