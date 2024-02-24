@@ -90,16 +90,9 @@ class _SelectWeaponDetialItemWidgetState
             PageController(initialPage: 0);
         int chromasMaxIndex = widget.data['chromas'].length;
         VideoPlayerController videoPlayerController =
-            VideoPlayerController.networkUrl(Uri.parse(
-                'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'));
+            VideoPlayerController.networkUrl(Uri.parse(''));
         ValueNotifier initializeVideoPlayerFuture = ValueNotifier(dynamic);
 
-        initializeVideoPlayerFuture.value =
-            videoPlayerController.initialize().then((_) {
-          videoPlayerController.play();
-          videoPlayerController.setLooping(false);
-          setState(() {});
-        });
         showDialog<void>(
           context: context,
           barrierDismissible: false, // user must tap button!
@@ -110,8 +103,8 @@ class _SelectWeaponDetialItemWidgetState
                 child: ListBody(
                   children: <Widget>[
                     SizedBox(
-                      height: 100,
-                      width: 100,
+                      height: 200,
+                      width: 350,
                       child: PageView(
                         controller: pageViewController,
                         physics: const NeverScrollableScrollPhysics(),
@@ -146,8 +139,8 @@ class _SelectWeaponDetialItemWidgetState
                       ),
                     ),
                     SizedBox(
-                      height: 30,
-                      width: 30,
+                      height: 50,
+                      width: 50,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: [
@@ -162,31 +155,28 @@ class _SelectWeaponDetialItemWidgetState
                                     },
                                     child: Text(
                                         "${widget.data['chromas'].indexOf(value) + 1}"))
-                                : Card(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        pageViewController
-                                            .jumpToPage(chromasMaxIndex);
+                                : ElevatedButton(
+                                    onPressed: () {
+                                      pageViewController
+                                          .jumpToPage(chromasMaxIndex);
 
-                                        videoPlayerController.dispose();
+                                      videoPlayerController.dispose();
 
-                                        videoPlayerController =
-                                            VideoPlayerController.networkUrl(
-                                                Uri.parse(
-                                                    value['streamedVideo']));
-                                        initializeVideoPlayerFuture.value =
-                                            videoPlayerController
-                                                .initialize()
-                                                .then((_) {
-                                          videoPlayerController.play();
+                                      videoPlayerController =
+                                          VideoPlayerController.networkUrl(
+                                              Uri.parse(
+                                                  value['streamedVideo']));
+                                      initializeVideoPlayerFuture.value =
                                           videoPlayerController
-                                              .setLooping(false);
-                                          setState(() {});
-                                        });
-                                      },
-                                      child: Text(
-                                          "${widget.data['chromas'].indexOf(value) + 1}"),
-                                    ),
+                                              .initialize()
+                                              .then((_) {
+                                        videoPlayerController.play();
+                                        videoPlayerController.setLooping(false);
+                                        setState(() {});
+                                      });
+                                    },
+                                    child: Text(
+                                        "${widget.data['chromas'].indexOf(value) + 1}"),
                                   );
                           })
                         ],
