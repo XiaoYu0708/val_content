@@ -2,27 +2,25 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
-import '/page/content/detials/agents/select_agent_detial.dart';
+import '/page/content/details/weapons/select_weapon_detial.dart';
 
-class Agents extends StatefulWidget {
-  const Agents({super.key});
+class Weapons extends StatefulWidget {
+  const Weapons({super.key});
 
   @override
-  State<Agents> createState() => _AgentsState();
+  State<Weapons> createState() => _WeaponsState();
 }
 
-class _AgentsState extends State<Agents> {
+class _WeaponsState extends State<Weapons> {
   List<dynamic> data = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView.separated(
-        itemBuilder: (BuildContext context, int index) {
-          return AgentItemWidget(data: data[index]);
+        itemBuilder: (BuildContext context, index) {
+          return WeaponItemWidget(data: data[index]);
         },
-        separatorBuilder: (BuildContext context, int index) {
-          return const Divider();
-        },
+        separatorBuilder: (BuildContext context, index) => const Divider(),
         itemCount: data.length,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -45,7 +43,7 @@ class _AgentsState extends State<Agents> {
   Future<void> fetchData() async {
     try {
       final response = await http
-          .get(Uri.parse(FlutterI18n.translate(context, 'WebApiUrl.Agents')));
+          .get(Uri.parse(FlutterI18n.translate(context, 'WebApiUrl.Weapons')));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -66,8 +64,8 @@ class _AgentsState extends State<Agents> {
   }
 }
 
-class AgentItemWidget extends StatelessWidget {
-  const AgentItemWidget({
+class WeaponItemWidget extends StatelessWidget {
+  const WeaponItemWidget({
     super.key,
     required this.data,
   });
@@ -77,22 +75,17 @@ class AgentItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: data['displayIconSmall'] != null
-          ? Image.network(data['displayIconSmall'])
-          : const Icon(Icons.question_mark),
-      title: Hero(
-        tag: Text(data['displayName']),
-        child: Text(data['displayName']),
+      leading: Image.network(
+        data['displayIcon'],
+        width: 150,
       ),
-      trailing: Image.network(
-        data['role']['displayIcon'],
-        height: 20.0,
-      ),
+      title: Text(data['displayName']),
+      trailing: const Icon(Icons.arrow_right),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (builder) => AgentDetial(
+            builder: (builder) => WeaponDetial(
               data: data,
             ),
           ),
@@ -142,7 +135,7 @@ class MySearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         var suggestion = suggestions[index];
 
-        return AgentItemWidget(
+        return WeaponItemWidget(
           data: suggestion,
         );
       },

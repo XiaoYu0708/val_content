@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
-import '/page/content/detials/level_borders.dart';
-import '/page/content/detials/competitivetiers.dart';
-import '/page/content/detials/agents/agents.dart';
-import '/page/content/detials/buddies.dart';
-import '/page/content/detials/bundles.dart';
-import '/page/content/detials/maps.dart';
-import '/page/content/detials/player_cards.dart';
-import '/page/content/detials/sprays.dart';
-import '/page/content/detials/weapons/weapons.dart';
+import '/page/content/details/level_borders.dart';
+import '/page/content/details/competitivetiers.dart';
+import '/page/content/details/agents/agents.dart';
+import '/page/content/details/buddies.dart';
+import '/page/content/details/bundles.dart';
+import '/page/content/details/maps.dart';
+import '/page/content/details/player_cards.dart';
+import '/page/content/details/sprays.dart';
+import '/page/content/details/weapons/weapons.dart';
 
 class Content extends StatefulWidget {
   const Content({super.key});
