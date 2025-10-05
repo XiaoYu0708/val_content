@@ -1129,6 +1129,9 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                             borderRadius: BorderRadius.circular(4),
                             child: Image.network(
                               'https://media.valorant-api.com/currencies/85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741/largeicon.png',
+                              color: isDarkMode
+                                  ? Colors.grey[100]
+                                  : const Color(0xFF16181D),
                               width: 20,
                               height: 20,
                               fit: BoxFit.cover,
@@ -1245,6 +1248,9 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                           borderRadius: BorderRadius.circular(3),
                           child: Image.network(
                               'https://media.valorant-api.com/currencies/85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741/largeicon.png',
+                              color: isDarkMode
+                                  ? Colors.grey[100]
+                                  : const Color(0xFF16181D),
                               width: 16,
                               height: 16,
                               fit: BoxFit.contain,
