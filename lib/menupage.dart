@@ -17,6 +17,7 @@ class _MenuState extends State<Menu> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: [
+        // ignore: prefer_const_constructors
         RiotLoginPage(),
         const Content(),
         const About(),

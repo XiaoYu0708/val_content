@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +14,10 @@ Map<String, dynamic>? playerInfo;
 Map<String, dynamic>? wallet;
 
 class RiotLoginPage extends StatefulWidget {
+  const RiotLoginPage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _RiotLoginPageState createState() => _RiotLoginPageState();
 }
 
@@ -788,8 +793,8 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Row(
-                children: const [
+              content: const Row(
+                children: [
                   SizedBox(
                     width: 16,
                     height: 16,
