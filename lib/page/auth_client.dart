@@ -12,6 +12,7 @@ String? entitlementToken;
 Map<String, dynamic>? accountXP;
 Map<String, dynamic>? playerInfo;
 Map<String, dynamic>? wallet;
+Map<String, dynamic>? storefront; // 新增商店資料
 
 class RiotLoginPage extends StatefulWidget {
   const RiotLoginPage({super.key});
@@ -80,6 +81,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       }
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
+      _tryFetchStorefrontIfReady(); // 新增
     } else {
       debugPrint('取得玩家資訊失敗：狀態碼 ${response.statusCode}');
     }
@@ -105,6 +107,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       }
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
+      _tryFetchStorefrontIfReady(); // 新增
     } else {
       debugPrint('取得 Riot Geo 失敗，狀態碼：${response.statusCode}');
     }
@@ -129,6 +132,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       }
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
+      _tryFetchStorefrontIfReady(); // 新增
     } else {
       debugPrint('取得 Entitlements Token 失敗：狀態碼 ${response.statusCode}');
     }
@@ -149,6 +153,15 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         entitlementToken != null &&
         authToken != null) {
       _fetchWallet();
+    }
+  }
+
+  void _tryFetchStorefrontIfReady() {
+    if (shard != null &&
+        playerInfo != null &&
+        entitlementToken != null &&
+        authToken != null) {
+      _fetchStorefront();
     }
   }
 
@@ -232,11 +245,50 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       if (mounted) {
         setState(() {
           wallet = data;
-          debugPrint('Wallet 資料：$data');
         });
       }
     } else {
       debugPrint('取得 Wallet 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  // 新增商店資料獲取方法
+  Future<Map<String, dynamic>?> _fetchStorefront() async {
+    
+    final puuid = playerInfo!['sub'];
+
+    final url =
+        Uri.parse('https://pd.$shard.a.pvp.net/store/v3/storefront/$puuid');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'X-Riot-Entitlements-JWT': entitlementToken!,
+        'X-Riot-ClientPlatform': clientPlatform,
+        'X-Riot-ClientVersion': clientVersion,
+        'Content-Type': 'application/json',
+      },
+      body: '{}', // 空 JSON 主體，上傳表示請求有效
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('取得 Storefront 失敗，狀態碼：${response.statusCode}');
     }
   }
 
@@ -344,6 +396,8 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             _buildStatsGrid(),
             const SizedBox(height: 20),
             if (wallet != null) _buildWalletCard(),
+            const SizedBox(height: 20),
+            if (storefront != null) _buildStorefrontCard(), // 新增商店卡片
           ],
         ),
       ),
@@ -478,8 +532,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             value: (currentXP % 1000) / 1000,
             backgroundColor:
                 isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300],
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(Color(0xFFFF4654)),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF4654)),
           ),
         ],
       ),
@@ -635,9 +688,8 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? const Color(0xFF16181D)
-                      : Colors.grey[100],
+                  color:
+                      isDarkMode ? const Color(0xFF16181D) : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -671,8 +723,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                         child: Container(
                           color: isDarkMode
                               ? const Color(0xFF2A2D31)
-                              : const Color(
-                                  0xFF1C1C1E), // 淺色模式使用深色背景
+                              : const Color(0xFF1C1C1E), // 淺色模式使用深色背景
                           child: Image.network(
                             'https://media.valorant-api.com/currencies/${e.key}/largeicon.png',
                             width: 40,
@@ -734,6 +785,230 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         ],
       ),
     );
+  }
+
+  // 新增商店卡片 Widget
+  Widget _buildStorefrontCard() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final skinsPanelLayout =
+        storefront?['SkinsPanelLayout'] as Map<String, dynamic>? ?? {};
+    final singleItemOffers =
+        skinsPanelLayout['SingleItemOffers'] as List<dynamic>? ?? [];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1E2328), const Color(0xFF2A2D31)]
+              : [Colors.white, Colors.grey[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+            width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D4AA),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.shopping_cart,
+                    color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '每日商店',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF4654),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _getTimeRemaining(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: singleItemOffers.length,
+            itemBuilder: (context, index) {
+              final offer = singleItemOffers[index] as Map<String, dynamic>;
+              return _buildSkinOfferCard(offer, isDarkMode);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkinOfferCard(Map<String, dynamic> offer, bool isDarkMode) {
+    final offerId = offer['OfferID'] as String? ?? '';
+    final cost = offer['Cost'] as Map<String, dynamic>? ?? {};
+    final costEntries = cost.entries.toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF16181D) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF2A2D31) : Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: Image.network(
+                  'https://media.valorant-api.com/weaponskins/$offerId/displayicon.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color:
+                        isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[200],
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: isDarkMode ? Colors.white54 : Colors.grey[400],
+                      size: 32,
+                    ),
+                  ),
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFFF4654)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (costEntries.isNotEmpty)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.network(
+                              'https://media.valorant-api.com/currencies/${costEntries.first.key}/largeicon.png',
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.monetization_on,
+                                      color: Colors.amber, size: 16),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${costEntries.first.value}',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTimeRemaining() {
+    if (storefront == null) return '載入中...';
+
+    final skinsPanelLayout =
+        storefront!['SkinsPanelLayout'] as Map<String, dynamic>? ?? {};
+    final singleItemOffersRemainingDurationInSeconds =
+        skinsPanelLayout['SingleItemOffersRemainingDurationInSeconds']
+                as int? ??
+            0;
+
+    final duration =
+        Duration(seconds: singleItemOffersRemainingDurationInSeconds);
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+
+    return '$hours小時$minutes分鐘';
   }
 
   Future<void> _logout() async {
@@ -840,6 +1115,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
               accountXP = null;
               playerInfo = null;
               wallet = null;
+              storefront = null; // 新增
             });
           }
 
