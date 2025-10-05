@@ -35,7 +35,7 @@ class _MenuState extends State<Menu> {
             selectedIcon: const Icon(Icons.account_circle),
             label: FlutterI18n.translate(
               context,
-              "帳號",
+              "Menu.destinations.label0",
             ),
           ),
           NavigationDestination(

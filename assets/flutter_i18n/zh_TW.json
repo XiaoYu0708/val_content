@@ -12,6 +12,7 @@
     },
     "Menu": {
         "destinations": {
+            "label0": "帳號",
             "label1": "資產",
             "label2": "關於"
         }
@@ -49,6 +50,30 @@
         "WeaponDetial": {
             "dontDisPlay1": "隨機最愛造型",
             "dontDisPlay2": "標準"
+        },
+        "AuthClient": {
+            "Server": "伺服器",
+            "Verified": "已驗證",
+            "Unverified": "未驗證",
+            "Lavel": "等級",
+            "Contry": "國家",
+            "Email": "電子郵件",
+            "Phone": "電話",
+            "AccountInfo": "帳號狀態",
+            "WalletBalance": "錢包餘額",
+            "dailyStore": "每日商店",
+            "NightMarket": "夜市",
+            "day": "天",
+            "hour": "小時",
+            "minute": "分鐘",
+            "Loading": "載入中...",
+            "currencies": {
+                "ValorantPoints": "特務幣",
+                "KingdomCredits": "王國幣",
+                "RadianitePoints": "輻能點數",
+                "FreeAgent": "免費特務",
+                "Unowned": "未知貨幣"
+            }
         }
     },
     "floatingActionButton": {

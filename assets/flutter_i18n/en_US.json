@@ -12,6 +12,7 @@
     },
     "Menu": {
         "destinations": {
+            "label0": "Account",
             "label1": "Content",
             "label2": "About"
         }
@@ -49,6 +50,30 @@
         "WeaponDetial": {
             "dontDisPlay1": "Random Favorite Skin",
             "dontDisPlay2": "Standard"
+        },
+        "AuthClient": {
+            "Server": "Server",
+            "Verified": "Verified",
+            "Unverified": "Unverified",
+            "Lavel": "Level",
+            "Contry": "Country",
+            "Email": "Email",
+            "Phone": "Phone",
+            "AccountInfo": "Account Info",
+            "WalletBalance": "Wallet Balance",
+            "dailyStore": "Daily Store",
+            "NightMarket": "Night.Market",
+            "day": "Days",
+            "hour": "Hours",
+            "minute": "Minutes",
+            "Loading": "Loading...",
+            "currencies": {
+                "ValorantPoints": "Valorant Points",
+                "KingdomCredits": "Kingdom Credits",
+                "RadianitePoints": "Radianite Points",
+                "FreeAgent": "Free Agent",
+                "Unowned": "Unowned"
+            }
         }
     },
     "floatingActionButton": {

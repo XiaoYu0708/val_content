@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -12,7 +13,7 @@ String? entitlementToken;
 Map<String, dynamic>? accountXP;
 Map<String, dynamic>? playerInfo;
 Map<String, dynamic>? wallet;
-Map<String, dynamic>? storefront; // 新增商店資料
+Map<String, dynamic>? storefront;
 
 class RiotLoginPage extends StatefulWidget {
   const RiotLoginPage({super.key});
@@ -132,7 +133,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       }
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
-      _tryFetchStorefrontIfReady(); // 新增
+      _tryFetchStorefrontIfReady();
     } else {
       debugPrint('取得 Entitlements Token 失敗：狀態碼 ${response.statusCode}');
     }
@@ -253,10 +254,15 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
   }
 
   // 新增商店資料獲取方法
-  Future<Map<String, dynamic>?> _fetchStorefront() async {
-    
+  Future<void> _fetchStorefront() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Storefront');
+      return;
+    }
     final puuid = playerInfo!['sub'];
-
     final url =
         Uri.parse('https://pd.$shard.a.pvp.net/store/v3/storefront/$puuid');
 
@@ -268,9 +274,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
   "platformChipset": "Unknown"
 }
 ''';
-
     final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
-
     const clientVersion = 'release-01.00-shipping-12-07-2023';
 
     final response = await http.post(
@@ -284,11 +288,15 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       },
       body: '{}', // 空 JSON 主體，上傳表示請求有效
     );
-
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          storefront = data;
+        });
+      }
     } else {
-      throw Exception('取得 Storefront 失敗，狀態碼：${response.statusCode}');
+      debugPrint('取得 Storefront 失敗：狀態碼 ${response.statusCode}');
     }
   }
 
@@ -363,7 +371,10 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             ),
             const SizedBox(height: 20),
             Text(
-              '正在載入玩家資料...',
+              FlutterI18n.translate(
+                context,
+                "Page.AuthClient.Loading",
+              ),
               style: TextStyle(
                   color: isDarkMode ? Colors.white70 : Colors.grey[600],
                   fontSize: 16),
@@ -397,7 +408,11 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             const SizedBox(height: 20),
             if (wallet != null) _buildWalletCard(),
             const SizedBox(height: 20),
-            if (storefront != null) _buildStorefrontCard(), // 新增商店卡片
+            if (storefront != null) ...[
+              _buildDailyStoreCard(),
+              const SizedBox(height: 20),
+              _buildBonusStoreCard(),
+            ],
           ],
         ),
       ),
@@ -473,7 +488,13 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${shard?.toUpperCase() ?? "載入中"} 伺服器',
+                        '${shard?.toUpperCase() ?? FlutterI18n.translate(
+                              context,
+                              "Page.AuthClient.Loading",
+                            )} ${FlutterI18n.translate(
+                          context,
+                          "Page.AuthClient.Server",
+                        )}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -510,7 +531,10 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '等級 $level',
+                '${FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Lavel",
+                )} $level',
                 style: TextStyle(
                   color: isDarkMode ? Colors.white : Colors.black87,
                   fontSize: 18,
@@ -550,28 +574,64 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       children: [
         _buildStatCard(
           icon: Icons.public,
-          title: '國家',
+          title: FlutterI18n.translate(
+            context,
+            "Page.AuthClient.Contry",
+          ),
           value: playerInfo!['country'] ?? '未知',
           color: Colors.blue,
         ),
         _buildStatCard(
           icon: Icons.email,
-          title: '電子郵件',
-          value: playerInfo!['email_verified'] ? '已驗證' : '未驗證',
+          title: FlutterI18n.translate(
+            context,
+            "Page.AuthClient.Email",
+          ),
+          value: playerInfo!['email_verified']
+              ? FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Verified",
+                )
+              : FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Unverified",
+                ),
           color: playerInfo!['email_verified'] ? Colors.green : Colors.orange,
         ),
         _buildStatCard(
           icon: Icons.phone,
-          title: '手機號碼',
-          value: playerInfo!['phone_number_verified'] ? '已驗證' : '未驗證',
+          title: FlutterI18n.translate(
+            context,
+            "Page.AuthClient.Phone",
+          ),
+          value: playerInfo!['phone_number_verified']
+              ? FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Verified",
+                )
+              : FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Unverified",
+                ),
           color: playerInfo!['phone_number_verified']
               ? Colors.green
               : Colors.orange,
         ),
         _buildStatCard(
           icon: Icons.verified_user,
-          title: '帳戶狀態',
-          value: playerInfo!['account_verified'] ? '已驗證' : '未驗證',
+          title: FlutterI18n.translate(
+            context,
+            "Page.AuthClient.AccountInfo",
+          ),
+          value: playerInfo!['account_verified']
+              ? FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Verified",
+                )
+              : FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.Unverified",
+                ),
           color: playerInfo!['account_verified'] ? Colors.green : Colors.red,
         ),
       ],
@@ -674,7 +734,10 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
               ),
               const SizedBox(width: 12),
               Text(
-                '錢包餘額',
+                FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.WalletBalance",
+                ),
                 style: TextStyle(
                   color: isDarkMode ? Colors.white : Colors.black87,
                   fontSize: 20,
@@ -788,12 +851,12 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
   }
 
   // 新增商店卡片 Widget
-  Widget _buildStorefrontCard() {
+  Widget _buildDailyStoreCard() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final skinsPanelLayout =
         storefront?['SkinsPanelLayout'] as Map<String, dynamic>? ?? {};
-    final singleItemOffers =
-        skinsPanelLayout['SingleItemOffers'] as List<dynamic>? ?? [];
+    final singleItemStoreOffers =
+        skinsPanelLayout['SingleItemStoreOffers'] as List<dynamic>? ?? [];
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -835,7 +898,10 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
               ),
               const SizedBox(width: 12),
               Text(
-                '每日商店',
+                FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.dailyStore",
+                ),
                 style: TextStyle(
                   color: isDarkMode ? Colors.white : Colors.black87,
                   fontSize: 20,
@@ -850,7 +916,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _getTimeRemaining(),
+                  _getDailyStoreTimeRemaining(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -870,11 +936,109 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
               mainAxisSpacing: 12,
               childAspectRatio: 0.8,
             ),
-            itemCount: singleItemOffers.length,
+            itemCount: singleItemStoreOffers.length,
             itemBuilder: (context, index) {
-              final offer = singleItemOffers[index] as Map<String, dynamic>;
+              final offer =
+                  singleItemStoreOffers[index] as Map<String, dynamic>;
               return _buildSkinOfferCard(offer, isDarkMode);
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 夜市卡片
+  Widget _buildBonusStoreCard() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bonusStore = storefront?['BonusStore'] as Map<String, dynamic>? ?? {};
+    final bonusOffers = bonusStore['BonusStoreOffers'] as List<dynamic>? ?? [];
+
+    if (bonusOffers.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1E2328), const Color(0xFF2A2D31)]
+              : [Colors.white, Colors.grey[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+            width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF9800),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.local_offer,
+                    color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.NightMarket",
+                ),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF4654),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _getBonusStoreTimeRemaining(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: bonusOffers.length > 6 ? 6 : bonusOffers.length,
+              itemBuilder: (context, index) {
+                final offer = bonusOffers[index] as Map<String, dynamic>;
+                return Container(
+                  width: 150,
+                  margin: const EdgeInsets.only(right: 12),
+                  child: _buildBonusOfferCard(offer, isDarkMode),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -914,8 +1078,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                   topRight: Radius.circular(12),
                 ),
                 child: Image.network(
-                  'https://media.valorant-api.com/weaponskins/$offerId/displayicon.png',
-                  fit: BoxFit.cover,
+                  'https://media.valorant-api.com/weaponskinlevels/$offerId/displayicon.png',
                   errorBuilder: (context, error, stackTrace) => Container(
                     color:
                         isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[200],
@@ -957,13 +1120,15 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isDarkMode
+                                ? const Color(0xFF16181D)
+                                : Colors.grey[100],
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: Image.network(
-                              'https://media.valorant-api.com/currencies/${costEntries.first.key}/largeicon.png',
+                              'https://media.valorant-api.com/currencies/85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741/largeicon.png',
                               width: 20,
                               height: 20,
                               fit: BoxFit.cover,
@@ -993,22 +1158,184 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
     );
   }
 
-  String _getTimeRemaining() {
-    if (storefront == null) return '載入中...';
+  Widget _buildBonusOfferCard(
+      Map<String, dynamic> bonusOffer, bool isDarkMode) {
+    final offer = bonusOffer['Offer'] as Map<String, dynamic>;
+    final discountPercent = bonusOffer['DiscountPercent'] ?? 0;
+    final discountCosts =
+        bonusOffer['DiscountCosts'] as Map<String, dynamic>? ?? {};
+    final originalCost =
+        offer['Cost']['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] ?? 0;
+    final discountedCost =
+        discountCosts['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] ?? originalCost;
+    final offerId = offer['OfferID'] as String? ?? '';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF16181D) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (discountPercent > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: const BoxDecoration(
+                color: Color(0xFF4CAF50),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Text(
+                '-$discountPercent%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Image.network(
+                      'https://media.valorant-api.com/weaponskinlevels/$offerId/displayicon.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.image_not_supported,
+                        color: isDarkMode ? Colors.white54 : Colors.grey[400],
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (discountPercent > 0)
+                    Text(
+                      '$originalCost',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                        fontSize: 10,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF16181D)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: Image.network(
+                              'https://media.valorant-api.com/currencies/85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741/largeicon.png',
+                              width: 16,
+                              height: 16,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.monetization_on,
+                                      color: Colors.amber, size: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$discountedCost',
+                        style: TextStyle(
+                          color: discountPercent > 0
+                              ? const Color(0xFF4CAF50)
+                              : (isDarkMode ? Colors.white : Colors.black87),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getDailyStoreTimeRemaining() {
+    if (storefront == null) {
+      return FlutterI18n.translate(
+        context,
+        "Page.AuthClient.Loading",
+      );
+    }
 
     final skinsPanelLayout =
         storefront!['SkinsPanelLayout'] as Map<String, dynamic>? ?? {};
-    final singleItemOffersRemainingDurationInSeconds =
+    final remainingSeconds =
         skinsPanelLayout['SingleItemOffersRemainingDurationInSeconds']
                 as int? ??
             0;
 
-    final duration =
-        Duration(seconds: singleItemOffersRemainingDurationInSeconds);
+    final duration = Duration(seconds: remainingSeconds);
     final hours = duration.inHours;
     final minutes = duration.inMinutes % 60;
 
-    return '$hours小時$minutes分鐘';
+    return '$hours ${FlutterI18n.translate(
+      context,
+      "Page.AuthClient.hour",
+    )} $minutes ${FlutterI18n.translate(
+      context,
+      "Page.AuthClient.minute",
+    )}';
+  }
+
+  String _getBonusStoreTimeRemaining() {
+    if (storefront == null) {
+      return FlutterI18n.translate(
+        context,
+        "Page.AuthClient.Loading",
+      );
+    }
+
+    final bonusStore = storefront!['BonusStore'] as Map<String, dynamic>? ?? {};
+    final remainingSeconds =
+        bonusStore['BonusStoreRemainingDurationInSeconds'] as int? ?? 0;
+
+    final duration = Duration(seconds: remainingSeconds);
+    final days = duration.inDays;
+    final hours = duration.inHours % 24;
+
+    if (days > 0) {
+      return '$days ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.day",
+      )} $hours ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.hour",
+      )}';
+    } else {
+      return '$hours ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.hour",
+      )} ${duration.inMinutes % 60} ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.minute",
+      )}';
+    }
   }
 
   Future<void> _logout() async {
@@ -1195,13 +1522,30 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
   String _getCurrencyName(String currencyId) {
     switch (currencyId) {
       case '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741':
-        return 'VP (Valorant Points)';
+        return FlutterI18n.translate(
+          context,
+          "Page.AuthClient.currencies.ValorantPoints",
+        );
+      case '85ca954a-41f2-ce94-9b45-8ca3dd39a00d':
+        return FlutterI18n.translate(
+          context,
+          "Page.AuthClient.currencies.KingdomCredits",
+        );
       case 'e59aa87c-4cbf-517a-5983-6e81511be9b7':
-        return 'Radianite Points';
+        return FlutterI18n.translate(
+          context,
+          "Page.AuthClient.currencies.RadianitePoints",
+        );
       case 'f08d4ae3-939c-4576-ab26-09ce1f23bb37':
-        return 'Free Agents';
+        return FlutterI18n.translate(
+          context,
+          "Page.AuthClient.currencies.FreeAgent",
+        );
       default:
-        return '未知貨幣';
+        return FlutterI18n.translate(
+          context,
+          "Page.AuthClient.currencies.Unowned",
+        );
     }
   }
 
