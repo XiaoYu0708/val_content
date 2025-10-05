@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
+import 'package:val_content/page/auth_client.dart';
 import '/page/about.dart';
 import '/page/content/content.dart';
 
@@ -15,9 +16,10 @@ class _MenuState extends State<Menu> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: const [
-        Content(),
-        About(),
+      body: [
+        RiotLoginPage(),
+        const Content(),
+        const About(),
       ][_pageIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _pageIndex,
@@ -27,6 +29,14 @@ class _MenuState extends State<Menu> {
           });
         },
         destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.account_circle_outlined),
+            selectedIcon: const Icon(Icons.account_circle),
+            label: FlutterI18n.translate(
+              context,
+              "帳號",
+            ),
+          ),
           NavigationDestination(
             icon: const Icon(Icons.ad_units_outlined),
             selectedIcon: const Icon(Icons.ad_units),

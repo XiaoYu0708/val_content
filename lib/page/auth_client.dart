@@ -1,0 +1,939 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:webview_flutter/webview_flutter.dart';
+
+String? authToken;
+String? idToken;
+String? shard;
+String? entitlementToken;
+Map<String, dynamic>? accountXP;
+Map<String, dynamic>? playerInfo;
+Map<String, dynamic>? wallet;
+
+class RiotLoginPage extends StatefulWidget {
+  @override
+  _RiotLoginPageState createState() => _RiotLoginPageState();
+}
+
+class _RiotLoginPageState extends State<RiotLoginPage> {
+  late final WebViewController _controller;
+
+  final String loginUrl =
+      'https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid';
+
+  bool isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) {
+            if (request.url.contains('access_token=') &&
+                request.url.contains('id_token=')) {
+              final extractedAuthToken =
+                  _extractTokenFromUrl(request.url, 'access_token');
+              final extractedIdToken =
+                  _extractTokenFromUrl(request.url, 'id_token');
+              if (extractedAuthToken != null && extractedIdToken != null) {
+                if (mounted) {
+                  setState(() {
+                    authToken = extractedAuthToken;
+                    idToken = extractedIdToken;
+                    isLoggedIn = true;
+                  });
+                  _fetchPlayerInfo(authToken!);
+                  _fetchRiotGeo(authToken!, idToken!);
+                  _fetchEntitlementsToken(authToken!);
+                }
+                return NavigationDecision.prevent;
+              }
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(loginUrl));
+  }
+
+  Future<void> _fetchPlayerInfo(String token) async {
+    final url = Uri.parse('https://auth.riotgames.com/userinfo');
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          playerInfo = data;
+        });
+      }
+      _tryFetchAccountXPIfReady();
+      _tryFetchWalletIfReady();
+    } else {
+      debugPrint('取得玩家資訊失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  Future<void> _fetchRiotGeo(String authToken, String idToken) async {
+    final url = Uri.parse(
+        'https://riot-geo.pas.si.riotgames.com/pas/v1/product/valorant');
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'id_token': idToken}),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          shard = data['affinities']?['live'];
+        });
+      }
+      _tryFetchAccountXPIfReady();
+      _tryFetchWalletIfReady();
+    } else {
+      debugPrint('取得 Riot Geo 失敗，狀態碼：${response.statusCode}');
+    }
+  }
+
+  Future<void> _fetchEntitlementsToken(String authToken) async {
+    final url =
+        Uri.parse('https://entitlements.auth.riotgames.com/api/token/v1');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'Content-Type': 'application/json',
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          entitlementToken = data['entitlements_token'];
+        });
+      }
+      _tryFetchAccountXPIfReady();
+      _tryFetchWalletIfReady();
+    } else {
+      debugPrint('取得 Entitlements Token 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  void _tryFetchAccountXPIfReady() {
+    if (shard != null &&
+        playerInfo != null &&
+        entitlementToken != null &&
+        authToken != null) {
+      _fetchAccountXP();
+    }
+  }
+
+  void _tryFetchWalletIfReady() {
+    if (shard != null &&
+        playerInfo != null &&
+        entitlementToken != null &&
+        authToken != null) {
+      _fetchWallet();
+    }
+  }
+
+  Future<void> _fetchAccountXP() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Account XP');
+      return;
+    }
+    final puuid = playerInfo!['sub'];
+    final url =
+        Uri.parse('https://pd.$shard.a.pvp.net/account-xp/v1/players/$puuid');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'X-Riot-Entitlements-JWT': entitlementToken!,
+        'X-Riot-ClientPlatform': clientPlatform,
+        'X-Riot-ClientVersion': clientVersion,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          accountXP = data;
+        });
+      }
+    } else {
+      debugPrint('取得 Account XP 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  Future<void> _fetchWallet() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Wallet');
+      return;
+    }
+    final puuid = playerInfo!['sub'];
+    final url = Uri.parse('https://pd.$shard.a.pvp.net/store/v1/wallet/$puuid');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'X-Riot-Entitlements-JWT': entitlementToken!,
+        'X-Riot-ClientPlatform': clientPlatform,
+        'X-Riot-ClientVersion': clientVersion,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          wallet = data;
+          debugPrint('Wallet 資料：$data');
+        });
+      }
+    } else {
+      debugPrint('取得 Wallet 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: isDarkMode ? const Color(0xFF0F1419) : Colors.grey[50],
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF4654),
+                shape: BoxShape.circle,
+              ),
+              child:
+                  const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text('VALORANT',
+                style: TextStyle(
+                    color: null, // 使用主題預設顏色
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20)),
+          ],
+        ),
+        backgroundColor: isDarkMode ? const Color(0xFF0F1419) : Colors.white,
+        elevation: 0,
+        iconTheme:
+            IconThemeData(color: isDarkMode ? Colors.white : Colors.black),
+        actions: [
+          if (isLoggedIn)
+            IconButton(
+              onPressed: _logout,
+              icon: const Icon(Icons.logout),
+              tooltip: '登出',
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+        ],
+      ),
+      body: isLoggedIn
+          ? playerInfo != null
+              ? _buildPlayerInfo()
+              : _buildLoadingView()
+          : WebViewWidget(controller: _controller),
+    );
+  }
+
+  Widget _buildLoadingView() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDarkMode
+              ? [const Color(0xFF0F1419), const Color(0xFF1E2328)]
+              : [Colors.grey[50]!, Colors.grey[100]!],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF4654)),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '正在載入玩家資料...',
+              style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                  fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayerInfo() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDarkMode
+              ? [const Color(0xFF0F1419), const Color(0xFF1E2328)]
+              : [Colors.grey[50]!, Colors.grey[100]!],
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            _buildPlayerCard(),
+            const SizedBox(height: 20),
+            _buildStatsGrid(),
+            const SizedBox(height: 20),
+            if (wallet != null) _buildWalletCard(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayerCard() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1E2328), const Color(0xFF2A2D31)]
+              : [Colors.white, Colors.grey[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+            width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF4654),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF4654).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.person, color: Colors.white, size: 30),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${playerInfo!['acct']['game_name']}#${playerInfo!['acct']['tag_line']}',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: shard == 'ap' ? Colors.green : Colors.blue,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${shard?.toUpperCase() ?? "載入中"} 伺服器',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (accountXP != null) _buildLevelProgress(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelProgress() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final level = accountXP!['Progress']['Level'] ?? 0;
+    final currentXP = accountXP!['Progress']['XP'] ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF16181D) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '等級 $level',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '$currentXP XP',
+                style: const TextStyle(
+                  color: Color(0xFFFF4654),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: (currentXP % 1000) / 1000,
+            backgroundColor:
+                isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300],
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(Color(0xFFFF4654)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.5,
+      children: [
+        _buildStatCard(
+          icon: Icons.public,
+          title: '國家',
+          value: playerInfo!['country'] ?? '未知',
+          color: Colors.blue,
+        ),
+        _buildStatCard(
+          icon: Icons.email,
+          title: '電子郵件',
+          value: playerInfo!['email_verified'] ? '已驗證' : '未驗證',
+          color: playerInfo!['email_verified'] ? Colors.green : Colors.orange,
+        ),
+        _buildStatCard(
+          icon: Icons.phone,
+          title: '手機號碼',
+          value: playerInfo!['phone_number_verified'] ? '已驗證' : '未驗證',
+          color: playerInfo!['phone_number_verified']
+              ? Colors.green
+              : Colors.orange,
+        ),
+        _buildStatCard(
+          icon: Icons.verified_user,
+          title: '帳戶狀態',
+          value: playerInfo!['account_verified'] ? '已驗證' : '未驗證',
+          color: playerInfo!['account_verified'] ? Colors.green : Colors.red,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1E2328), const Color(0xFF2A2D31)]
+              : [Colors.white, Colors.grey[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+            width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.grey[600],
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletCard() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final balances = wallet?['Balances'] as Map<String, dynamic>? ?? {};
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1E2328), const Color(0xFF2A2D31)]
+              : [Colors.white, Colors.grey[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+            width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD700),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.account_balance_wallet,
+                    color: Colors.black, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '錢包餘額',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...balances.entries.map((e) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? const Color(0xFF16181D)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDarkMode
+                              ? [
+                                  const Color(0xFF3C3C41),
+                                  const Color(0xFF2A2D31)
+                                ]
+                              : [
+                                  const Color(0xFF2C2C2E),
+                                  const Color(0xFF1C1C1E)
+                                ], // 淺色模式使用深色漸層
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: isDarkMode
+                                ? const Color(0xFF4A4A4F)
+                                : const Color(0xFF3A3A3C),
+                            width: 1),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2D31)
+                              : const Color(
+                                  0xFF1C1C1E), // 淺色模式使用深色背景
+                          child: Image.network(
+                            'https://media.valorant-api.com/currencies/${e.key}/largeicon.png',
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(
+                                Icons.monetization_on,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getCurrencyName(e.key),
+                            style: TextStyle(
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${e.value}',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _logout() async {
+    try {
+      // 顯示確認對話框
+      final bool? shouldLogout = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+          return AlertDialog(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1E2328) : Colors.white,
+            title: Text(
+              '確認登出',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Text(
+              '您確定要登出嗎？',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.grey[600],
+              ),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  '取消',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF4654),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('登出'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldLogout == true) {
+        // 顯示載入指示器
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text('正在登出...'),
+                ],
+              ),
+              backgroundColor: const Color(0xFF2196F3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+
+        try {
+          // 先導向 Riot 登出頁面
+          await _controller
+              .loadRequest(Uri.parse('https://auth.riotgames.com/logout'));
+
+          // 等待登出完成
+          await Future.delayed(const Duration(seconds: 3));
+
+          // 清除 WebView 的 cookies 和緩存
+          await _controller.clearCache();
+          await _controller.clearLocalStorage();
+
+          // 清除本地狀態
+          if (mounted) {
+            setState(() {
+              isLoggedIn = false;
+              authToken = null;
+              idToken = null;
+              shard = null;
+              entitlementToken = null;
+              accountXP = null;
+              playerInfo = null;
+              wallet = null;
+            });
+          }
+
+          // 重新導向到登入頁面
+          if (mounted) {
+            await _controller.loadRequest(Uri.parse(loginUrl));
+          }
+
+          // 清除之前的 SnackBar 並顯示成功訊息
+          if (mounted) {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('已成功登出'),
+                backgroundColor: const Color(0xFF4CAF50),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        } catch (logoutError) {
+          debugPrint('登出過程中發生錯誤：$logoutError');
+
+          // 即使有錯誤也清除本地狀態
+          if (mounted) {
+            setState(() {
+              isLoggedIn = false;
+              authToken = null;
+              idToken = null;
+              shard = null;
+              entitlementToken = null;
+              accountXP = null;
+              playerInfo = null;
+              wallet = null;
+            });
+          }
+
+          // 重新導向到登入頁面
+          if (mounted) {
+            await _controller.loadRequest(Uri.parse(loginUrl));
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('登出完成（可能有部分錯誤）'),
+                backgroundColor: const Color(0xFFFF9800),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('登出時發生錯誤：$e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('登出時發生錯誤，請重試'),
+            backgroundColor: const Color(0xFFFF4654),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  String _getCurrencyName(String currencyId) {
+    switch (currencyId) {
+      case '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741':
+        return 'VP (Valorant Points)';
+      case 'e59aa87c-4cbf-517a-5983-6e81511be9b7':
+        return 'Radianite Points';
+      case 'f08d4ae3-939c-4576-ab26-09ce1f23bb37':
+        return 'Free Agents';
+      default:
+        return '未知貨幣';
+    }
+  }
+
+  String? _extractTokenFromUrl(String url, String tokenKey) {
+    final uri = Uri.parse(url);
+    final fragment = uri.fragment;
+    if (fragment.isNotEmpty) {
+      final params = Uri.splitQueryString(fragment);
+      return params[tokenKey];
+    }
+    if (uri.queryParameters.containsKey(tokenKey)) {
+      return uri.queryParameters[tokenKey];
+    }
+    return null;
+  }
+}

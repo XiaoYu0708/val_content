@@ -41,6 +41,24 @@ class _AboutState extends State<About> {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: ListTile(
+                title: const Text('API'),
+                subtitle: const Text('Valorant API Docs'),
+                trailing: const Icon(Icons.link),
+                onTap: () {
+                  launchUrl(
+                    Uri.parse(
+                      'https://valapidocs.techchrism.me/',
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const Divider(),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ListTile(
                 title: Text(FlutterI18n.translate(
                     context, 'Page.About.Body.ListTile2.Title')),
                 subtitle: const Text('E-mail'),
@@ -65,6 +83,7 @@ class _AboutState extends State<About> {
                 subtitle: const Text(
                   'val_content is not affiliated with or endorsed by Riot Games in any way.',
                 ),
+                trailing: const Icon(Icons.link),
                 onTap: () {
                   launchUrl(
                     Uri.parse(
