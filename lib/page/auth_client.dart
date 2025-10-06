@@ -292,7 +292,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       0: FlutterI18n.translate(
         // 未定義或未排名
         context,
-        "Page.AuthClient.Rank.Unrated",
+        "Page.AuthClient.Rank.Unranked",
       ),
       3: FlutterI18n.translate(
         // 鐵牌 1
@@ -789,7 +789,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                                   width: 20,
                                   height: 20,
                                   child: Image.network(
-                                    'https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/$playerRankInt/smallicon.png',
+                                    'https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/$playerRankInt/smallicon.png',
                                     fit: BoxFit.contain,
                                     errorBuilder: (c, e, s) => const Icon(
                                       Icons.military_tech,
