@@ -336,7 +336,10 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             IconButton(
               onPressed: _logout,
               icon: const Icon(Icons.logout),
-              tooltip: '登出',
+              tooltip: FlutterI18n.translate(
+                context,
+                "Page.AuthClient.Logout.title",
+              ),
               color: isDarkMode ? Colors.white : Colors.black,
             ),
         ],
@@ -1355,14 +1358,20 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             backgroundColor:
                 isDarkMode ? const Color(0xFF1E2328) : Colors.white,
             title: Text(
-              '確認登出',
+              FlutterI18n.translate(
+                context,
+                "Page.AuthClient.Logout.confirmTitle",
+              ),
               style: TextStyle(
                 color: isDarkMode ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.bold,
               ),
             ),
             content: Text(
-              '您確定要登出嗎？',
+              FlutterI18n.translate(
+                context,
+                "Page.AuthClient.Logout.content",
+              ),
               style: TextStyle(
                 color: isDarkMode ? Colors.white70 : Colors.grey[600],
               ),
@@ -1374,7 +1383,10 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
                 child: Text(
-                  '取消',
+                  FlutterI18n.translate(
+                    context,
+                    "Page.AuthClient.Logout.cancel",
+                  ),
                   style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.grey[600],
                   ),
@@ -1389,7 +1401,12 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('登出'),
+                child: Text(
+                  FlutterI18n.translate(
+                    context,
+                    "Page.AuthClient.Logout.confirm",
+                  ),
+                ),
               ),
             ],
           );
@@ -1401,9 +1418,9 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Row(
+              content: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
@@ -1411,8 +1428,13 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                  SizedBox(width: 12),
-                  Text('正在登出...'),
+                  const SizedBox(width: 12),
+                  Text(
+                    FlutterI18n.translate(
+                      context,
+                      "Page.AuthClient.Logout.loggingOut",
+                    ),
+                  ),
                 ],
               ),
               backgroundColor: const Color(0xFF2196F3),
@@ -1462,7 +1484,12 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('已成功登出'),
+                content: Text(
+                  FlutterI18n.translate(
+                    context,
+                    "Page.AuthClient.Logout.loggedOut",
+                  ),
+                ),
                 backgroundColor: const Color(0xFF4CAF50),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -1497,7 +1524,12 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('登出完成（可能有部分錯誤）'),
+                content: Text(
+                  FlutterI18n.translate(
+                    context,
+                    "Page.AuthClient.Logout.LogoutButError",
+                  ),
+                ),
                 backgroundColor: const Color(0xFFFF9800),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -1513,7 +1545,12 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('登出時發生錯誤，請重試'),
+            content: Text(
+              FlutterI18n.translate(
+                context,
+                "Page.AuthClient.Logout.error",
+              ),
+            ),
             backgroundColor: const Color(0xFFFF4654),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

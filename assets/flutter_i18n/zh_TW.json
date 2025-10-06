@@ -73,6 +73,17 @@
                 "RadianitePoints": "輻能點數",
                 "FreeAgent": "免費特務",
                 "Unowned": "未知貨幣"
+            },
+            "Logout": {
+                "title": "登出",
+                "confirmTitle": "確認登出",
+                "content": "確定要登出嗎？",
+                "cancel": "取消",
+                "confirm": "確定",
+                "loggingOut": "登出中...",
+                "loggedOut": "已成功登出",
+                "loggedOutButError": "登出完成（可能有部分錯誤）",
+                "error": "登出時發生錯誤，請重試"
             }
         }
     },

@@ -73,6 +73,17 @@
                 "RadianitePoints": "Radianite Points",
                 "FreeAgent": "Free Agent",
                 "Unowned": "Unowned"
+            },
+            "Logout": {
+                "title": "Logout",
+                "confirmTitle": "Confirm Logout",
+                "content": "Are you sure you want to logout?",
+                "cancel": "Cancel",
+                "confirm": "Confirm",
+                "loggingOut": "Logging out...",
+                "loggedOut": "Logged out successfully",
+                "loggedOutButError": "Logged out (with some errors)",
+                "error": "Error occurred while logging out, please try again"
             }
         }
     },
