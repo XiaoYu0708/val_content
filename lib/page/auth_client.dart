@@ -88,7 +88,8 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       }
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
-      _tryFetchStorefrontIfReady(); // 新增
+      _tryFetchStorefrontIfReady();
+      _tryFetchPlayerMMRIfReady();
     } else {
       debugPrint('取得玩家資訊失敗：狀態碼 ${response.statusCode}');
     }
@@ -114,7 +115,8 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       }
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
-      _tryFetchStorefrontIfReady(); // 新增
+      _tryFetchStorefrontIfReady();
+      _tryFetchPlayerMMRIfReady();
     } else {
       debugPrint('取得 Riot Geo 失敗，狀態碼：${response.statusCode}');
     }
@@ -140,6 +142,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
       _tryFetchAccountXPIfReady();
       _tryFetchWalletIfReady();
       _tryFetchStorefrontIfReady();
+      _tryFetchPlayerMMRIfReady();
     } else {
       debugPrint('取得 Entitlements Token 失敗：狀態碼 ${response.statusCode}');
     }
@@ -151,8 +154,6 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         entitlementToken != null &&
         authToken != null) {
       _fetchAccountXP();
-      // 新增：嘗試抓取牌位
-      _tryFetchPlayerMMRIfReady();
     }
   }
 
@@ -162,8 +163,6 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         entitlementToken != null &&
         authToken != null) {
       _fetchWallet();
-      // 新增：嘗試抓取牌位
-      _tryFetchPlayerMMRIfReady();
     }
   }
 
@@ -173,12 +172,9 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         entitlementToken != null &&
         authToken != null) {
       _fetchStorefront();
-      // 新增：嘗試抓取牌位
-      _tryFetchPlayerMMRIfReady();
     }
   }
 
-  // 新增：條件判斷後抓取玩家牌位
   void _tryFetchPlayerMMRIfReady() {
     if (_isFetchingMMR) return;
     if (playerRankInt != -1) return;
@@ -190,7 +186,6 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
     }
   }
 
-  // 新增：抓取玩家牌位
   Future<void> _fetchPlayerRank() async {
     if (playerInfo == null ||
         shard == null ||
@@ -286,7 +281,139 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
     }
   }
 
-  // 新增：數字段位對應文字 (簡化版，可能與賽季調整略有差異)
+  Future<void> _fetchAccountXP() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Account XP');
+      return;
+    }
+    final puuid = playerInfo!['sub'];
+    final url =
+        Uri.parse('https://pd.$shard.a.pvp.net/account-xp/v1/players/$puuid');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'X-Riot-Entitlements-JWT': entitlementToken!,
+        'X-Riot-ClientPlatform': clientPlatform,
+        'X-Riot-ClientVersion': clientVersion,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          accountXP = data;
+        });
+      }
+    } else {
+      debugPrint('取得 Account XP 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  Future<void> _fetchWallet() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Wallet');
+      return;
+    }
+    final puuid = playerInfo!['sub'];
+    final url = Uri.parse('https://pd.$shard.a.pvp.net/store/v1/wallet/$puuid');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'X-Riot-Entitlements-JWT': entitlementToken!,
+        'X-Riot-ClientPlatform': clientPlatform,
+        'X-Riot-ClientVersion': clientVersion,
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          wallet = data;
+        });
+      }
+    } else {
+      debugPrint('取得 Wallet 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
+  Future<void> _fetchStorefront() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Storefront');
+      return;
+    }
+    final puuid = playerInfo!['sub'];
+    final url =
+        Uri.parse('https://pd.$shard.a.pvp.net/store/v3/storefront/$puuid');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'X-Riot-Entitlements-JWT': entitlementToken!,
+        'X-Riot-ClientPlatform': clientPlatform,
+        'X-Riot-ClientVersion': clientVersion,
+        'Content-Type': 'application/json',
+      },
+      body: '{}', // 空 JSON 主體，上傳表示請求有效
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (mounted) {
+        setState(() {
+          storefront = data;
+        });
+      }
+    } else {
+      debugPrint('取得 Storefront 失敗：狀態碼 ${response.statusCode}');
+    }
+  }
+
   String _mapTierNumberToRank(int tier) {
     Map<int, String> map = {
       0: FlutterI18n.translate(
@@ -425,140 +552,6 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
           context,
           "Page.AuthClient.Rank.Unrated",
         );
-  }
-
-  Future<void> _fetchAccountXP() async {
-    if (playerInfo == null ||
-        shard == null ||
-        entitlementToken == null ||
-        authToken == null) {
-      debugPrint('缺少必要參數，無法取得 Account XP');
-      return;
-    }
-    final puuid = playerInfo!['sub'];
-    final url =
-        Uri.parse('https://pd.$shard.a.pvp.net/account-xp/v1/players/$puuid');
-
-    const clientPlatformJson = '''
-{
-  "platformType": "PC",
-  "platformOS": "Windows",
-  "platformOSVersion": "10.0.19042.1.256.64bit",
-  "platformChipset": "Unknown"
-}
-''';
-    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
-    const clientVersion = 'release-01.00-shipping-12-07-2023';
-
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $authToken',
-        'X-Riot-Entitlements-JWT': entitlementToken!,
-        'X-Riot-ClientPlatform': clientPlatform,
-        'X-Riot-ClientVersion': clientVersion,
-      },
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (mounted) {
-        setState(() {
-          accountXP = data;
-        });
-      }
-    } else {
-      debugPrint('取得 Account XP 失敗：狀態碼 ${response.statusCode}');
-    }
-  }
-
-  Future<void> _fetchWallet() async {
-    if (playerInfo == null ||
-        shard == null ||
-        entitlementToken == null ||
-        authToken == null) {
-      debugPrint('缺少必要參數，無法取得 Wallet');
-      return;
-    }
-    final puuid = playerInfo!['sub'];
-    final url = Uri.parse('https://pd.$shard.a.pvp.net/store/v1/wallet/$puuid');
-
-    const clientPlatformJson = '''
-{
-  "platformType": "PC",
-  "platformOS": "Windows",
-  "platformOSVersion": "10.0.19042.1.256.64bit",
-  "platformChipset": "Unknown"
-}
-''';
-    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
-    const clientVersion = 'release-01.00-shipping-12-07-2023';
-
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $authToken',
-        'X-Riot-Entitlements-JWT': entitlementToken!,
-        'X-Riot-ClientPlatform': clientPlatform,
-        'X-Riot-ClientVersion': clientVersion,
-      },
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (mounted) {
-        setState(() {
-          wallet = data;
-        });
-      }
-    } else {
-      debugPrint('取得 Wallet 失敗：狀態碼 ${response.statusCode}');
-    }
-  }
-
-  // 新增商店資料獲取方法
-  Future<void> _fetchStorefront() async {
-    if (playerInfo == null ||
-        shard == null ||
-        entitlementToken == null ||
-        authToken == null) {
-      debugPrint('缺少必要參數，無法取得 Storefront');
-      return;
-    }
-    final puuid = playerInfo!['sub'];
-    final url =
-        Uri.parse('https://pd.$shard.a.pvp.net/store/v3/storefront/$puuid');
-
-    const clientPlatformJson = '''
-{
-  "platformType": "PC",
-  "platformOS": "Windows",
-  "platformOSVersion": "10.0.19042.1.256.64bit",
-  "platformChipset": "Unknown"
-}
-''';
-    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
-    const clientVersion = 'release-01.00-shipping-12-07-2023';
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $authToken',
-        'X-Riot-Entitlements-JWT': entitlementToken!,
-        'X-Riot-ClientPlatform': clientPlatform,
-        'X-Riot-ClientVersion': clientVersion,
-        'Content-Type': 'application/json',
-      },
-      body: '{}', // 空 JSON 主體，上傳表示請求有效
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (mounted) {
-        setState(() {
-          storefront = data;
-        });
-      }
-    } else {
-      debugPrint('取得 Storefront 失敗：狀態碼 ${response.statusCode}');
-    }
   }
 
   @override
