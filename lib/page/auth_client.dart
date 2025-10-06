@@ -288,35 +288,143 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
 
   // 新增：數字段位對應文字 (簡化版，可能與賽季調整略有差異)
   String _mapTierNumberToRank(int tier) {
-    const map = {
-      0: 'Unrated',
-      3: 'Iron 1',
-      4: 'Iron 2',
-      5: 'Iron 3',
-      6: 'Bronze 1',
-      7: 'Bronze 2',
-      8: 'Bronze 3',
-      9: 'Silver 1',
-      10: 'Silver 2',
-      11: 'Silver 3',
-      12: 'Gold 1',
-      13: 'Gold 2',
-      14: 'Gold 3',
-      15: 'Platinum 1',
-      16: 'Platinum 2',
-      17: 'Platinum 3',
-      18: 'Diamond 1',
-      19: 'Diamond 2',
-      20: 'Diamond 3',
-      21: 'Ascendant 1',
-      22: 'Ascendant 2',
-      23: 'Ascendant 3',
-      24: 'Immortal 1',
-      25: 'Immortal 2',
-      26: 'Immortal 3',
-      27: 'Radiant',
+    Map<int, String> map = {
+      0: FlutterI18n.translate(
+        // 未定義或未排名
+        context,
+        "Page.AuthClient.Rank.Unrated",
+      ),
+      3: FlutterI18n.translate(
+        // 鐵牌 1
+        context,
+        "Page.AuthClient.Rank.Iron1",
+      ),
+      4: FlutterI18n.translate(
+        // 鐵牌 2
+        context,
+        "Page.AuthClient.Rank.Iron2",
+      ),
+      5: FlutterI18n.translate(
+        // 鐵牌 3
+        context,
+        "Page.AuthClient.Rank.Iron3",
+      ),
+      6: FlutterI18n.translate(
+        // 銅牌 1
+        context,
+        "Page.AuthClient.Rank.Bronze1",
+      ),
+      7: FlutterI18n.translate(
+        // 銅牌 2
+        context,
+        "Page.AuthClient.Rank.Bronze2",
+      ),
+      8: FlutterI18n.translate(
+        // 銅牌 3
+        context,
+        "Page.AuthClient.Rank.Bronze3",
+      ),
+      9: FlutterI18n.translate(
+        // 銀牌 1
+        context,
+        "Page.AuthClient.Rank.Silver1",
+      ),
+      10: FlutterI18n.translate(
+        // 銀牌 2
+        context,
+        "Page.AuthClient.Rank.Silver2",
+      ),
+      11: FlutterI18n.translate(
+        // 銀牌 3
+        context,
+        "Page.AuthClient.Rank.Silver3",
+      ),
+      12: FlutterI18n.translate(
+        // 金牌 1
+        context,
+        "Page.AuthClient.Rank.Gold1",
+      ),
+      13: FlutterI18n.translate(
+        // 金牌 2
+        context,
+        "Page.AuthClient.Rank.Gold2",
+      ),
+      14: FlutterI18n.translate(
+        // 金牌 3
+        context,
+        "Page.AuthClient.Rank.Gold3",
+      ),
+      15: FlutterI18n.translate(
+        // 白金 1
+        context,
+        "Page.AuthClient.Rank.Platinum1",
+      ),
+      16: FlutterI18n.translate(
+        // 白金 2
+        context,
+        "Page.AuthClient.Rank.Platinum2",
+      ),
+      17: FlutterI18n.translate(
+        // 白金 3
+        context,
+        "Page.AuthClient.Rank.Platinum3",
+      ),
+      18: FlutterI18n.translate(
+        // 鑽石 1
+        context,
+        "Page.AuthClient.Rank.Diamond1",
+      ),
+      19: FlutterI18n.translate(
+        // 鑽石 2
+        context,
+        "Page.AuthClient.Rank.Diamond2",
+      ),
+      20: FlutterI18n.translate(
+        // 鑽石 3
+        context,
+        "Page.AuthClient.Rank.Diamond3",
+      ),
+      21: FlutterI18n.translate(
+        // 大師
+        context,
+        "Page.AuthClient.Rank.Ascendant1",
+      ),
+      22: FlutterI18n.translate(
+        // 大師 2
+        context,
+        "Page.AuthClient.Rank.Ascendant2",
+      ),
+      23: FlutterI18n.translate(
+        // 大師 3
+        context,
+        "Page.AuthClient.Rank.Ascendant3",
+      ),
+      24: FlutterI18n.translate(
+        // 不朽 1
+        context,
+        "Page.AuthClient.Rank.Immortal1",
+      ),
+      25: FlutterI18n.translate(
+        // 不朽 2
+        context,
+        "Page.AuthClient.Rank.Immortal2",
+      ),
+      26: FlutterI18n.translate(
+        // 不朽 3
+        context,
+        "Page.AuthClient.Rank.Immortal3",
+      ),
+      27: FlutterI18n.translate(
+        // 輝耀
+        context,
+        "Page.AuthClient.Rank.Radiant",
+      ),
     };
-    return map[tier] ?? 'Unrated';
+    return map[tier] ??
+        FlutterI18n.translate(
+          context,
+          "Page.AuthClient.Rank.Unrated",
+        );
   }
 
   Future<void> _fetchAccountXP() async {
