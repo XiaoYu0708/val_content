@@ -668,6 +668,8 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
             if (storefront != null) ...[
               _buildDailyStoreCard(),
               const SizedBox(height: 20),
+              _buildAccessoryStoreCard(),
+              const SizedBox(height: 20),
               _buildBonusStoreCard(),
             ],
           ],
@@ -1585,34 +1587,6 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         ));
   }
 
-  String _getDailyStoreTimeRemaining() {
-    if (storefront == null) {
-      return FlutterI18n.translate(
-        context,
-        "Page.AuthClient.Loading",
-      );
-    }
-
-    final skinsPanelLayout =
-        storefront!['SkinsPanelLayout'] as Map<String, dynamic>? ?? {};
-    final remainingSeconds =
-        skinsPanelLayout['SingleItemOffersRemainingDurationInSeconds']
-                as int? ??
-            0;
-
-    final duration = Duration(seconds: remainingSeconds);
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes % 60;
-
-    return '$hours ${FlutterI18n.translate(
-      context,
-      "Page.AuthClient.hour",
-    )} $minutes ${FlutterI18n.translate(
-      context,
-      "Page.AuthClient.minute",
-    )}';
-  }
-
   String _getBonusStoreTimeRemaining() {
     if (storefront == null) {
       return FlutterI18n.translate(
@@ -1642,6 +1616,388 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         context,
         "Page.AuthClient.hour",
       )} ${duration.inMinutes % 60} ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.minute",
+      )}';
+    }
+  }
+
+  // 新增：配件商店卡片
+  Widget _buildAccessoryStoreCard() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accessoryStore = storefront!['AccessoryStore'];
+
+    if (accessoryStore == null ||
+        accessoryStore['AccessoryStoreOffers'] == null) {
+      return const SizedBox.shrink();
+    }
+
+    final offers = accessoryStore['AccessoryStoreOffers'] as List;
+    final remainingSeconds =
+        accessoryStore['AccessoryStoreRemainingDurationInSeconds'] ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1E2328), const Color(0xFF2A2D31)]
+              : [Colors.white, Colors.grey[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[300]!,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D4AA),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.sports_esports,
+                    color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                FlutterI18n.translate(
+                  context,
+                  "Page.AuthClient.AccessoiresShop",
+                ),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D4AA),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _getAccessoryStoreTimeRemaining(remainingSeconds),
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1.2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: offers.length > 4 ? 4 : offers.length,
+            itemBuilder: (context, index) {
+              return _buildAccessoryOfferCard(offers[index], isDarkMode);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccessoryOfferCard(Map<String, dynamic> offer, bool isDarkMode) {
+    final offerData = offer['Offer'];
+    final cost = offerData['Cost'];
+    final rewards = offerData['Rewards'] as List;
+
+    // 取得第一個貨幣和價格
+    String currencyId = '';
+    int price = 0;
+    if (cost != null && cost.isNotEmpty) {
+      currencyId = cost.keys.first;
+      price = cost[currencyId] ?? 0;
+    }
+
+    // 取得第一個獎勵物品
+    String itemId = '';
+    if (rewards.isNotEmpty) {
+      itemId = rewards[0]['ItemID'] ?? '';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF2A2D31), const Color(0xFF363A3F)]
+              : [Colors.white, Colors.grey[100]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF3C3C41) : Colors.grey[200]!,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 物品圖片或名稱
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D4AA).withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: _buildAccessoryContent(itemId, isDarkMode),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 價格資訊
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 貨幣圖示
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.network(
+                    'https://media.valorant-api.com/currencies/85ca954a-41f2-ce94-9b45-8ca3dd39a00d/largeicon.png',
+                    color:
+                        isDarkMode ? Colors.grey[100] : const Color(0xFF16181D),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  price.toString(),
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccessoryContent(String itemId, bool isDarkMode) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        'https://media.valorant-api.com/playercards/$itemId/displayicon.png',
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF00D4AA)),
+              strokeWidth: 2,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          // 如果玩家卡片失敗，嘗試載入吊飾
+          return Image.network(
+            'https://media.valorant-api.com/buddylevels/$itemId/displayicon.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error2, stackTrace2) {
+              // 如果吊飾失敗，嘗試載入噴漆
+              return Image.network(
+                'https://media.valorant-api.com/sprays/$itemId/displayicon.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error3, stackTrace3) {
+                  // 如果噴漆失敗，可能是玩家稱號，顯示名稱
+                  return _buildPlayerTitleContent(itemId, isDarkMode);
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPlayerTitleContent(String itemId, bool isDarkMode) {
+    return FutureBuilder<String>(
+      future: _fetchPlayerTitleName(itemId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D4AA)),
+              strokeWidth: 2,
+            ),
+          );
+        }
+
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF00D4AA).withOpacity(0.1),
+                  const Color(0xFF00D4AA).withOpacity(0.2),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                _decodeUnicode(snapshot.data!),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          );
+        }
+
+        // 最終後備方案：顯示預設圖示
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF00D4AA).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.sports_esports,
+              color: Color(0xFF00D4AA),
+              size: 32,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String> _fetchPlayerTitleName(String titleId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://valorant-api.com/v1/playertitles/$titleId?language=${FlutterI18n.translate(context, "language")}'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['data']?['displayName'] ?? '';
+      }
+    } catch (e) {
+      debugPrint('取得玩家稱號名稱失敗：$e');
+    }
+    return '';
+  }
+
+  String _decodeUnicode(String unicodeString) {
+    try {
+      // 將 Unicode 轉義序列轉換為實際字符
+      return unicodeString.replaceAllMapped(
+        RegExp(r'\\u([0-9a-fA-F]{4})'),
+        (match) {
+          final codeUnit = int.parse(match.group(1)!, radix: 16);
+          return String.fromCharCode(codeUnit);
+        },
+      );
+    } catch (e) {
+      debugPrint('Unicode 解碼失敗：$e');
+      return unicodeString; // 返回原始字串
+    }
+  }
+
+  String _getDailyStoreTimeRemaining() {
+    if (storefront == null) {
+      return FlutterI18n.translate(
+        context,
+        "Page.AuthClient.Loading",
+      );
+    }
+
+    final skinsPanelLayout =
+        storefront!['SkinsPanelLayout'] as Map<String, dynamic>? ?? {};
+    final remainingSeconds =
+        skinsPanelLayout['SingleItemOffersRemainingDurationInSeconds']
+                as int? ??
+            0;
+
+    final duration = Duration(seconds: remainingSeconds);
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+
+    return '$hours ${FlutterI18n.translate(
+      context,
+      "Page.AuthClient.hour",
+    )} $minutes ${FlutterI18n.translate(
+      context,
+      "Page.AuthClient.minute",
+    )}';
+  }
+
+  String _getAccessoryStoreTimeRemaining(int seconds) {
+    if (seconds <= 0) return '已過期';
+
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+
+    if (hours > 24) {
+      final days = hours ~/ 24;
+      return '$days ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.day",
+      )} ${hours % 24} ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.hour",
+      )}';
+    } else if (hours > 0) {
+      return '$hours ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.hour",
+      )} $minutes ${FlutterI18n.translate(
+        context,
+        "Page.AuthClient.minute",
+      )}';
+    } else {
+      return '$minutes ${FlutterI18n.translate(
         context,
         "Page.AuthClient.minute",
       )}';

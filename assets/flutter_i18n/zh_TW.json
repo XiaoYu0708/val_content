@@ -1,4 +1,5 @@
 {
+    "language": "zh-TW",
     "WebApiUrl": {
         "Agents": "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=zh-TW",
         "Buddies": "https://valorant-api.com/v1/buddies?language=zh-TW",
@@ -62,6 +63,7 @@
             "AccountInfo": "帳號狀態",
             "WalletBalance": "錢包餘額",
             "dailyStore": "每日商店",
+            "AccessoiresShop": "配件商店",
             "NightMarket": "夜市",
             "day": "天",
             "hour": "小時",

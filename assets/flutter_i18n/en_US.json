@@ -1,4 +1,5 @@
 {
+    "language": "en-US",
     "WebApiUrl": {
         "Agents": "https://valorant-api.com/v1/agents?isPlayableCharacter=true",
         "Buddies": "https://valorant-api.com/v1/buddies",
@@ -62,6 +63,7 @@
             "AccountInfo": "Account Info",
             "WalletBalance": "Wallet Balance",
             "dailyStore": "Daily Store",
+            "AccessoiresShop": "Accessoires Shop",
             "NightMarket": "Night.Market",
             "day": "Days",
             "hour": "Hours",
