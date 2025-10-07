@@ -31,6 +31,7 @@ class RiotLoginPage extends StatefulWidget {
 
 class _RiotLoginPageState extends State<RiotLoginPage> {
   late final WebViewController _controller;
+  Map<String, dynamic>? playerLoadout; // 新增：玩家裝備資訊
 
   final String loginUrl =
       'https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid';
@@ -172,6 +173,67 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
         entitlementToken != null &&
         authToken != null) {
       _fetchStorefront();
+      // 新增：嘗試抓取玩家裝備
+      _tryFetchPlayerLoadoutIfReady();
+    }
+  }
+
+  void _tryFetchPlayerLoadoutIfReady() {
+    if (shard != null &&
+        playerInfo != null &&
+        entitlementToken != null &&
+        authToken != null) {
+      _fetchPlayerLoadout();
+    }
+  }
+
+  Future<void> _fetchPlayerLoadout() async {
+    if (playerInfo == null ||
+        shard == null ||
+        entitlementToken == null ||
+        authToken == null) {
+      debugPrint('缺少必要參數，無法取得 Player Loadout');
+      return;
+    }
+
+    final puuid = playerInfo!['sub'];
+    final url = Uri.parse(
+        'https://pd.$shard.a.pvp.net/personalization/v2/players/$puuid/playerloadout');
+
+    const clientPlatformJson = '''
+{
+  "platformType": "PC",
+  "platformOS": "Windows",
+  "platformOSVersion": "10.0.19042.1.256.64bit",
+  "platformChipset": "Unknown"
+}
+''';
+    final clientPlatform = base64Encode(utf8.encode(clientPlatformJson));
+    const clientVersion = 'release-01.00-shipping-12-07-2023';
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $authToken',
+          'X-Riot-Entitlements-JWT': entitlementToken!,
+          'X-Riot-ClientPlatform': clientPlatform,
+          'X-Riot-ClientVersion': clientVersion,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            playerLoadout = data;
+          });
+        }
+      } else {
+        debugPrint('取得 Player Loadout 失敗：狀態碼 ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('取得 Player Loadout 發生錯誤：$e');
     }
   }
 
@@ -680,6 +742,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
 
   Widget _buildPlayerCard() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final playerCardId = playerLoadout?['Identity']?['PlayerCardID'];
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -723,7 +786,37 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.person, color: Colors.white, size: 30),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: playerCardId != null
+                      ? Image.network(
+                          'https://media.valorant-api.com/playercards/$playerCardId/smallart.png',
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 2,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            // 如果小圖載入失敗，嘗試載入顯示圖示
+                            return Image.network(
+                              'https://media.valorant-api.com/playercards/$playerCardId/displayicon.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error2, stackTrace2) {
+                                // 最終後備方案：顯示預設圖示
+                                return const Icon(Icons.person,
+                                    color: Colors.white, size: 30);
+                              },
+                            );
+                          },
+                        )
+                      : const Icon(Icons.person, color: Colors.white, size: 30),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1692,7 +1785,7 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00D4AA),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   _getAccessoryStoreTimeRemaining(remainingSeconds),
@@ -2128,8 +2221,9 @@ class _RiotLoginPageState extends State<RiotLoginPage> {
               playerInfo = null;
               wallet = null;
               storefront = null;
-              playerRankInt = -1; // 新增重置
-              playerRankRR = -1; // 新增重置
+              playerLoadout = null; // 新增清除
+              playerRankInt = -1;
+              playerRankRR = -1;
             });
           }
 
